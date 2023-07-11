@@ -1,0 +1,18 @@
+{
+	"path": {
+		"value": "./",
+		"usage": "path to the directory"
+	},
+	"cmd": {
+		"value": "go run .",
+		"usage": "command run programme"
+	},
+	"extension": {
+		"value": "",
+		"usage": "extension .go"
+	},
+	"interval": {
+		"value": 4000,
+		"usage": "time interval Second"
+	}
+}

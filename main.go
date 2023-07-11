@@ -1,7 +1,8 @@
 package main
 
 import (
-	"flag"
+	_ "embed"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
@@ -101,14 +102,38 @@ func process(app *App) {
 	<-sigs
 }
 
-func main() {
-	app := New()
+//go:embed config.json
+var configFile []byte
 
-	flag.StringVar(&app.Path, "path", "", "path directory")
-	flag.StringVar(&app.Cmd, "cmd", "", "command run programme")
-	flag.StringVar(&app.Extension, "extension", ".go", "extension .go")
-	flag.DurationVar(&app.Interval, "interval", 4, "time interval Second")
-	flag.Parse()
+func ParseConfig(app *App) error {
+	var (
+		config   map[string]interface{}
+		err      error
+		interval time.Duration
+	)
+	if err = json.Unmarshal(configFile, &config); err != nil {
+		return err
+	}
+
+	app.Path = config["path"].(map[string]interface{})["value"].(string)
+	app.Cmd = config["cmd"].(map[string]interface{})["value"].(string)
+	app.Extension = config["extension"].(map[string]interface{})["value"].(string)
+	interval = time.Duration(config["interval"].(map[string]interface{})["value"].(float64)) * time.Millisecond
+	app.Interval = interval
+	return nil
+}
+
+func main() {
+	var (
+		app = New()
+		err error
+	)
+	err = ParseConfig(app)
+	if err != nil {
+		fmt.Println("Please check your config")
+		os.Exit(-1)
+	}
+
 	PrintBox(app)
 	ok := strings.HasPrefix(app.Extension, ".")
 	if !ok {
@@ -120,7 +145,7 @@ func main() {
 		os.Exit(-1)
 	}
 	fmt.Println("info", app.Cmd)
-	err := app.Start().Errror()
+	err = app.Start().Errror()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
