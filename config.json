@@ -1,0 +1,14 @@
+[
+	{
+		"cmd": "go run .",
+		"interval": "4s",
+		"extension": ".go",
+		"path": "/path"
+	},
+	{
+    "cmd": "go run .",
+    "interval": "4s",
+    "extension": ".go",
+    "path": "/path"
+	}
+]
