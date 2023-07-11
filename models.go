@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"path"
 	"strings"
 	"sync"
 	"syscall"
@@ -28,7 +27,7 @@ type Program struct {
 	Process    *os.Process
 	Files      map[string]time.Time
 	Path       string `json:"path"`
-	Executable string
+	Executable string `json:"executable"`
 	Extension  string `json:"extension"`
 	Cmd        string `json:"cmd"`
 	Interval   int    `json:"interval"`
@@ -113,22 +112,22 @@ func (app *App) handlerProcess(prog *Program) *App {
 	return app
 }
 
-func (app *App) getExectutable() *App {
-	for i := range app.Program {
-		prog := &app.Program[i]
-		if prog.Path == "." || prog.Path == "./" {
-			pwd, _ := os.Getwd()
-			prog.Executable = path.Base(pwd)
-		} else {
-			prog.Executable = path.Base(prog.Path)
-		}
-	}
-	return app
-}
+// func (app *App) getExectutable() *App {
+// 	for i := range app.Program {
+// 		prog := &app.Program[i]
+// 		if prog.Path == "." || prog.Path == "./" {
+// 			pwd, _ := os.Getwd()
+// 			prog.Executable = path.Base(pwd)
+// 		} else {
+// 			prog.Executable = path.Base(prog.Path)
+// 		}
+// 	}
+// 	return app
+// }
 
 func (app *App) process(prog *Program) {
+	fmt.Println("Process", prog.Executable, "Running")
 	for {
-		fmt.Println("Running")
 		update := Handler(prog)
 		if update {
 			KillPid(prog)
@@ -138,21 +137,20 @@ func (app *App) process(prog *Program) {
 			}
 			break
 		}
-		fmt.Println("update:", update)
 		time.Sleep(time.Duration(prog.Interval) * time.Second)
 	}
-	fmt.Println("process stop-----------------")
 }
 
 func (app *App) ExecCmd(prog *Program) error {
 	parse := strings.Fields(prog.Cmd)
-	fmt.Println("Exec Cmf parse:", parse)
 	if len(parse) == 0 {
 		return fmt.Errorf("empty command string")
 	}
 	args := parse[1:]
 	cmd := exec.Command(parse[0], args...)
 	cmd.Dir = prog.Path
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("failed to execute command: %v", err)
@@ -166,7 +164,6 @@ func (app *App) Start() *App {
 	if err != nil {
 		return app
 	}
-	app.getExectutable()
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
 
 	var wg sync.WaitGroup
@@ -187,7 +184,6 @@ func (app *App) Start() *App {
 					if routine {
 						app.handlerProcess(prog)
 						app.process(prog)
-						fmt.Println("routine done need run again")
 						pid <- false
 						routine = false
 					}
@@ -200,6 +196,7 @@ func (app *App) Start() *App {
 							os.Exit(1)
 						}
 						for _, process := range processes {
+							// fmt.Println(process.Executable())
 							if process.Executable() == prog.Executable {
 								fmt.Printf("%s: PID found: %d\n", prog.Executable, process.Pid())
 								prog.Pid = process.Pid()

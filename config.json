@@ -1,14 +1,16 @@
 [
     {
-        "cmd": "go run .",
-        "interval": 2,
-        "extension": ".go",
-        "path": "/Users/wax/code/C/42/inception/"
+        "cmd": "make",
+        "interval": 3,
+        "extension": ".rs",
+        "path": "~/code/Rust/Binance-Trader-Bot/",
+        "executable": "binance-trader-b"
     },
     {
-        "cmd": "go run .",
+        "cmd": "go run . &",
         "interval": 4,
         "extension": ".go",
-        "path": "~/code/Go/Term_ChatGPT/"
+        "path": "~/code/Go/Term_ChatGPT/",
+        "executable": "Term_ChatGPT"
     }
 ]
