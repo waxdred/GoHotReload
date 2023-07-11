@@ -11,8 +11,6 @@ import (
 	"strings"
 	"sync"
 	"syscall"
-
-	// "path"
 	"time"
 
 	"github.com/mitchellh/go-ps"
@@ -128,58 +126,50 @@ func (app *App) getExectutable() *App {
 }
 
 func (app *App) process(prog *Program) {
-	sigs := make(chan os.Signal, 1)
-	ticker := time.NewTicker(time.Duration(prog.Interval) * time.Second)
-
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
-
-	go func() {
-		for {
-			select {
-			case <-sigs:
-				fmt.Println("Thank see you next time...")
-				return
-			case <-ticker.C:
-				fmt.Println("Running")
-				update := Handler(prog)
-				if update {
-					KillPid(prog)
-					return
-				}
-				fmt.Println("update:", update)
-			}
+	for {
+		fmt.Println("Running")
+		update := Handler(prog)
+		if update {
+			KillPid(prog)
+			break
 		}
-	}()
-	<-sigs
+		fmt.Println("update:", update)
+		time.Sleep(time.Duration(prog.Interval) * time.Second)
+	}
+	fmt.Println("process stop-----------------")
 }
 
 func (app *App) Start() *App {
+	sigs := make(chan os.Signal, 1)
 	err := app.checkPath().error
 	if err != nil {
 		return app
 	}
 	app.getExectutable()
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
 
 	var wg sync.WaitGroup
 	for i := range app.Program {
 		prog := &app.Program[i]
-		prog.pid = make(chan bool)
 		wg.Add(1)
 		go func() {
+			pid := make(chan bool, 1)
 			defer wg.Done()
 			ticker := time.NewTicker(time.Duration(prog.Interval) * time.Second)
 			routine := false
 			for {
 				select {
-				case <-time.After(30 * time.Second):
-					fmt.Println("Timeout reached for", prog.Executable)
-					return
-				case <-prog.pid:
-					fmt.Println("Start process")
-					app.handlerProcess(prog)
-					app.process(prog)
-					fmt.Println("routine done need run again")
-					routine = false
+				case <-sigs:
+					fmt.Println("Thank see you next time...")
+					os.Exit(0)
+				case <-pid:
+					if routine {
+						app.handlerProcess(prog)
+						app.process(prog)
+						fmt.Println("routine done need run again")
+						pid <- false
+						routine = false
+					}
 				case <-ticker.C:
 					if !routine {
 						fmt.Println("Checking", prog.Executable, "for PID...")
@@ -193,18 +183,16 @@ func (app *App) Start() *App {
 								fmt.Printf("%s: PID found: %d\n", prog.Executable, process.Pid())
 								prog.Pid = process.Pid()
 								routine = true
+								pid <- true
 								break
 							}
-						}
-						if routine {
-							prog.pid <- true
 						}
 					}
 				}
 			}
 		}()
 	}
-
 	wg.Wait()
+	<-sigs
 	return app
 }
