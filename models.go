@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path"
 	"strings"
@@ -131,12 +132,32 @@ func (app *App) process(prog *Program) {
 		update := Handler(prog)
 		if update {
 			KillPid(prog)
+			time.Sleep(5 * time.Second)
+			if err := app.ExecCmd(prog); err != nil {
+				fmt.Println(err)
+			}
 			break
 		}
 		fmt.Println("update:", update)
 		time.Sleep(time.Duration(prog.Interval) * time.Second)
 	}
 	fmt.Println("process stop-----------------")
+}
+
+func (app *App) ExecCmd(prog *Program) error {
+	parse := strings.Fields(prog.Cmd)
+	fmt.Println("Exec Cmf parse:", parse)
+	if len(parse) == 0 {
+		return fmt.Errorf("empty command string")
+	}
+	args := parse[1:]
+	cmd := exec.Command(parse[0], args...)
+	cmd.Dir = prog.Path
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to execute command: %v", err)
+	}
+	return nil
 }
 
 func (app *App) Start() *App {
