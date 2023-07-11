@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -11,6 +12,13 @@ import (
 	"syscall"
 	"time"
 )
+
+type Config struct {
+	Cmd       string
+	Interval  string
+	Extension string
+	Path      string
+}
 
 func PrintBox(app *App) {
 	top := "┌───────────────────────────────────────────────────┐\n"
@@ -105,30 +113,27 @@ func process(app *App) {
 //go:embed config.json
 var configFile []byte
 
-func ParseConfig(app *App) error {
+func ParseConfig(app *App) ([]Config, error) {
 	var (
-		config   map[string]interface{}
-		err      error
-		interval time.Duration
+		config []Config
+		err    error
 	)
 	if err = json.Unmarshal(configFile, &config); err != nil {
-		return err
+		log.Println(err.Error())
+		return nil, err
 	}
 
-	app.Path = config["path"].(map[string]interface{})["value"].(string)
-	app.Cmd = config["cmd"].(map[string]interface{})["value"].(string)
-	app.Extension = config["extension"].(map[string]interface{})["value"].(string)
-	interval = time.Duration(config["interval"].(map[string]interface{})["value"].(float64)) * time.Millisecond
-	app.Interval = interval
-	return nil
+	return config, nil
 }
 
 func main() {
 	var (
-		app = New()
-		err error
+		app    = New()
+		err    error
+		config []Config
 	)
-	err = ParseConfig(app)
+	config, err = ParseConfig(app)
+	log.Println(config)
 	if err != nil {
 		fmt.Println("Please check your config")
 		os.Exit(-1)
