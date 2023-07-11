@@ -1,14 +1,14 @@
 [
-	{
-		"cmd": "go run .",
-		"interval": "4s",
-		"extension": ".go",
-		"path": "/path"
-	},
-	{
-    "cmd": "go run .",
-    "interval": "4s",
-    "extension": ".go",
-    "path": "/path"
-	}
+    {
+        "cmd": "go run .",
+        "interval": 2,
+        "extension": ".go",
+        "path": "/Users/wax/code/C/42/inception/"
+    },
+    {
+        "cmd": "go run .",
+        "interval": 4,
+        "extension": ".go",
+        "path": "~/code/Go/Term_ChatGPT/"
+    }
 ]
