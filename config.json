@@ -7,7 +7,7 @@
         "executable": "binance-trader-b"
     },
     {
-        "cmd": "go run . &",
+        "cmd": "go run .",
         "interval": 4,
         "extension": ".go",
         "path": "~/code/Go/Term_ChatGPT/",
