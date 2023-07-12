@@ -9,6 +9,8 @@ import (
 	"github.com/mitchellh/go-ps"
 )
 
+const PROCESSLEN = 16
+
 type App struct {
 	Program []Program
 	Mu      sync.Mutex
@@ -84,8 +86,15 @@ func (app *App) Start() *App {
 							os.Exit(1)
 						}
 						for _, process := range processes {
-							// fmt.Println(process.Executable())
-							if process.Executable() == prog.Executable {
+							// fmt.Println(process.Executable(), len(process.Executable()))
+							tmp := ""
+							if len(prog.Executable) > PROCESSLEN {
+								tmp = prog.Executable[:PROCESSLEN]
+							} else {
+								tmp = prog.Executable
+							}
+							fmt.Println(tmp)
+							if process.Executable() == tmp {
 								fmt.Printf("%s: PID found: %d\n", prog.Executable, process.Pid())
 								prog.Pid = process.Pid()
 								app.execPs(prog)

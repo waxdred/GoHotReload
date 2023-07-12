@@ -37,7 +37,7 @@ func printCheck(check, process, restart bool) {
 	restartStr := fmt.Sprintf("%-8v", restart)
 
 	fmt.Printf("├───────────────┼────────────────┬──────────────────┤\n")
-	fmt.Printf("│ Check  %v  │ Process %v│ Restart  %v│\n", checkStr, processStr, restartStr)
+	fmt.Printf("│ Check  %v  │ Run   %v  │ Restart  %v│\n", checkStr, processStr, restartStr)
 	fmt.Printf("├───────────────┴────────────────┴──────────────────┤\n")
 }
 
