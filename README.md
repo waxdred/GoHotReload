@@ -2,7 +2,10 @@
 ![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)
 # GoHotReload
 
-GoHotReload is a program that allows you to track and automatically restart programs when a file is saved. It provides an interface to monitor the execution of multiple programs and displays their status.
+GoHotReload is a developer tool that automatically reloads any program whenever a file is saved in the repository. It aims to enhance the development experience by eliminating the need for manual restarts during code iterations.
+
+## Features
+Automatic reloading: GoHotReload monitors the repository for any changes in the codebase and triggers an automatic reload of the program when a file is saved.
 
 ## Table of Contents
 - [Prerequisite](#Prerequisite)
@@ -13,6 +16,7 @@ GoHotReload is a program that allows you to track and automatically restart prog
 - [Signals](#Signals)
 
 ## Prerequisite
+Make sure you have Go installed on your machine. You can download it from the official Go website: https://golang.org/dl
 Before using GoHotReload, you need to configure the config.json file. This file contains the information about the programs you want to monitor and restart. Each program is defined by the following properties:
 - ```path```: The path to the directory where the program is located. Default value is ./.
 - ```executable```: The name of the executable file of the program.
