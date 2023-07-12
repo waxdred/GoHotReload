@@ -1,16 +1,16 @@
 [
-    {
-        "cmd": "make",
-        "interval": 3,
-        "extension": ".rs",
-        "path": "~/code/Rust/Binance-Trader-Bot/",
-        "executable": "binance-trader-b"
-    },
-    {
-        "cmd": "go run .",
-        "interval": 4,
-        "extension": ".go",
-        "path": "~/code/Go/Term_ChatGPT/",
-        "executable": "Term_ChatGPT"
-    }
+  {
+    "path": "/path/to/program1",
+    "executable": "program1",
+    "extension": ".go",
+    "cmd": "go run main.go",
+    "interval": 4
+  },
+  {
+    "path": "/path/to/program2",
+    "executable": "program2",
+    "extension": ".py",
+    "cmd": "python main.py",
+    "interval": 6
+  }
 ]
