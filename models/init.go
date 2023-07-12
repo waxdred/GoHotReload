@@ -11,7 +11,7 @@ func New() *App {
 	app.Mu.Lock()
 	defer app.Mu.Unlock()
 	fmt.Println("Parsing config ...")
-	data, err := ioutil.ReadFile("./config.json")
+	data, err := ioutil.ReadFile("./config/config.json")
 	if err != nil {
 		app.error = err
 		return app
