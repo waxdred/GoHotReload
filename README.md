@@ -1,3 +1,4 @@
+![GitHub Workflow Status](https://github.com/waxdred/GoHotReload/actions/workflows/default.yml/badge.svg)i
 ![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)
 # GoHotReload
 
