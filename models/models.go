@@ -95,7 +95,7 @@ func (app *App) Start() *App {
 							}
 							fmt.Println(tmp)
 							if process.Executable() == tmp {
-								fmt.Printf("%s: PID found: %d\n", prog.Executable, process.Pid())
+								// fmt.Printf("%s: PID found: %d\n", prog.Executable, process.Pid())
 								prog.Pid = process.Pid()
 								app.execPs(prog)
 								routine = true
