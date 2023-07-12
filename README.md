@@ -1,11 +1,75 @@
+![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)
 # GoHotReload
-```go 
-go run . -interval 2s -path ~/code/Go/Term_ChatGPT/ -extension .go -cmd "go run ."
+
+GoHotReload is a program that allows you to track and automatically restart programs when a file is saved. It provides an interface to monitor the execution of multiple programs and displays their status.
+
+## Table of Contents
+- [Prerequisite](#Prerequisite)
+- [Configuring](#Configuring)
+- [Running](#Running)
+- [Structure](#Structure)
+- [Monitoring](#Monitoring)
+- [Signals](#Signals)
+
+## Prerequisite
+Before using GoHotReload, you need to configure the config.json file. This file contains the information about the programs you want to monitor and restart. Each program is defined by the following properties:
+- ```path```: The path to the directory where the program is located. Default value is ./.
+- ```executable```: The name of the executable file of the program.
+- ```extension```: The file extension of the files to monitor. Default value is .go.
+- ```cmd```: The command to execute the program.
+- ```interval```: The interval in seconds at which the program should be checked for changes. Default value is 4.
+
+## Configuring 
+The config.json file is used to define the programs you want to monitor and restart. Here's an example of how to fill the config.json file:
+```json
+[
+  {
+    "path": "/path/to/program1",
+    "executable": "program1",
+    "extension": ".go",
+    "cmd": "go run main.go",
+    "interval": 4
+  },
+  {
+    "path": "/path/to/program2",
+    "executable": "program2",
+    "extension": ".py",
+    "cmd": "python main.py",
+    "interval": 6
+  }
+]
 ```
 
-> **INFO**
-> ```
-> utiliser la command ps pour recuper les pid et le tty du terminal qui run le programme
-> enssuite run le programme dans le tty 
-> ```
+In this example, we have two programs to monitor. The first program is located in /path/to/program1 directory, has an executable file named program1, and the command to execute it is go run main.go. The second program is located in /path/to/program2 directory, has an executable file named program2, and the command to execute it is python main.py.
+Make sure to provide the correct paths, executable names, file extensions, and commands for your programs.
+
+## Running
+To run the GoHotReload program, execute the main.go file. The program will read the config.json file, parse the configuration, and start monitoring the specified programs. If there are any errors during the parsing or execution, they will be displayed in the console.
+```shell
+go run main.go
+```
+
+## Structure
+The GoHotReload program consists of the following files:
+- ```main.go```: The entry point of the program. It initializes the application and starts the monitoring process.
+- ```models/app.go```: Contains the App struct and its methods for parsing the configuration, starting the monitoring process, and handling signals.
+- ```models/program.go```: Contains the Program struct and its methods for checking the program path, parsing the configuration, executing the program, and handling the process.
+- ```models/handler.go```: Contains the functions for handling signals, checking for file updates, and executing commands.
+- ```models/utils.go```: Contains utility functions for printing information and executing system commands.
+
+## Monitoring
+The GoHotReload program continuously monitors the specified programs at the specified intervals. It checks for any changes in the files with the specified extension in the program directory. If a file is updated, the program is restarted by executing the specified command.
+The program status is displayed in a box format, showing the handler number, status, check status, process status, restart status, executable name, path, command, file extension, process ID (PID), TTY, and memory usage.
+
+## Signals
+GoHotReload handles the SIGINT, SIGTERM, and SIGKILL signals to gracefully stop the program. When a signal is received, the program prints a message and exits. It also closes any open file descriptors.
+
+## Conclusion
+GoHotReload is a useful tool for monitoring and automatically restarting programs when a file is saved. By configuring the config.json file and running the program, you can easily track and manage multiple programs during development.
+
+## Contributing
+Contributions to this project are welcome. If you'd like to contribute, please fork the repository and make your changes. Then, open a pull request and I'll review your changes.
+
+## License
+This project is licensed under the MIT License.
 
