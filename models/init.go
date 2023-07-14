@@ -32,6 +32,7 @@ func New() *App {
 			app.configFile = append(app.configFile, file.Name())
 		}
 	}
+	fmt.Println(len(app.configFile))
 	if len(app.configFile) > 1 {
 		app.OptionsView()
 	}
@@ -39,16 +40,19 @@ func New() *App {
 	if app.ConfigSelect == "" && len(app.configFile) == 1 {
 		app.ConfigSelect = app.configFile[0]
 	}
-	data, err := ioutil.ReadFile(binaryPath + "/config/" + app.ConfigSelect)
+	conf := binaryPath + "/config/" + app.ConfigSelect
+	data, err := ioutil.ReadFile(conf)
 	if err != nil {
 		app.error = err
 		return app
 	}
+
 	err = json.Unmarshal(data, &app.Program)
 	if err != nil {
 		app.error = err
 		return app
 	}
+	fmt.Println(app.Program)
 	return app
 }
 

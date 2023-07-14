@@ -22,7 +22,7 @@ type App struct {
 }
 
 func (app *App) Listen() *App {
-	ticker := time.NewTicker(6 * time.Second)
+	ticker := time.NewTicker(2 * time.Second)
 	go func() {
 		for {
 			select {
@@ -50,6 +50,7 @@ type Program struct {
 	check      bool
 	process    bool
 	restart    bool
+	info       string
 }
 
 func (app *App) Start() *App {
@@ -69,6 +70,7 @@ func (app *App) Start() *App {
 			ticker := time.NewTicker(time.Duration(prog.Interval) * time.Second)
 			routine := false
 			for {
+				prog.info = "Search Programm..."
 				select {
 				case <-pid:
 					if routine {
@@ -76,6 +78,7 @@ func (app *App) Start() *App {
 							app.process(prog)
 						}
 						pid <- false
+						prog.info = ""
 						prog.TTY = ""
 						prog.Pid = 0
 						routine = false
@@ -83,14 +86,12 @@ func (app *App) Start() *App {
 					}
 				case <-ticker.C:
 					if !routine {
-						// fmt.Println("Checking", prog.Executable, "for PID...")
 						processes, err := ps.Processes()
 						if err != nil {
 							fmt.Println("Error:", err)
 							os.Exit(1)
 						}
 						for _, process := range processes {
-							// fmt.Println(process.Executable(), len(process.Executable()))
 							tmp := ""
 							if len(prog.Executable) > PROCESSLEN {
 								tmp = prog.Executable[:PROCESSLEN]
@@ -98,7 +99,7 @@ func (app *App) Start() *App {
 								tmp = prog.Executable
 							}
 							if process.Executable() == tmp {
-								// fmt.Printf("%s: PID found: %d\n", prog.Executable, process.Pid())
+								prog.info = fmt.Sprintf("%s: PID found: %d\n", prog.Executable, process.Pid())
 								prog.Pid = process.Pid()
 								app.execPs(prog)
 								routine = true
