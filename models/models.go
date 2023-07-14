@@ -12,9 +12,13 @@ import (
 const PROCESSLEN = 16
 
 type App struct {
-	Program []Program
-	Mu      sync.Mutex
-	error   error
+	Program      []Program
+	Mu           sync.Mutex
+	config       int
+	configFile   []string
+	ConfigSelect string
+	model        *model
+	error        error
 }
 
 func (app *App) Listen() *App {
@@ -93,7 +97,6 @@ func (app *App) Start() *App {
 							} else {
 								tmp = prog.Executable
 							}
-							fmt.Println(tmp)
 							if process.Executable() == tmp {
 								// fmt.Printf("%s: PID found: %d\n", prog.Executable, process.Pid())
 								prog.Pid = process.Pid()
