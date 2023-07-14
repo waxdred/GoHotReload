@@ -7,6 +7,8 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
 func New() *App {
@@ -14,7 +16,6 @@ func New() *App {
 	app.Mu.Lock()
 	defer app.Mu.Unlock()
 	clearScreen()
-	fmt.Println("Parsing config ...")
 	executablePath, err := os.Executable()
 	if err != nil {
 		fmt.Println("Erreur lors de la récupération du chemin du binaire :", err)
@@ -32,8 +33,8 @@ func New() *App {
 			app.configFile = append(app.configFile, file.Name())
 		}
 	}
-	fmt.Println(len(app.configFile))
 	if len(app.configFile) > 1 {
+		fmt.Println(Style.Foreground(lipgloss.Color(blue)).Margin(1, 1).Render("Select you config"))
 		app.OptionsView()
 	}
 	clearScreen()
@@ -52,7 +53,6 @@ func New() *App {
 		app.error = err
 		return app
 	}
-	fmt.Println(app.Program)
 	return app
 }
 

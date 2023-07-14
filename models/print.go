@@ -16,43 +16,6 @@ func clearScreen() {
 	cmd.Run()
 }
 
-func printLine(title, value string) {
-	if len(value) >= 30 {
-		value = value[:30] + " ..."
-	}
-	line := fmt.Sprintf("│ %s: %s", title, value)
-	fmt.Printf(line)
-	fmt.Printf("%s│\n", strings.Repeat(" ", (54-len(line))))
-}
-
-func printMem(title, value string) {
-	if len(value) >= 30 {
-		value = value[:30] + " ..."
-	}
-	line := fmt.Sprintf("│ %s: %s", title, value)
-	fmt.Printf(line)
-	fmt.Printf("%s│\n", strings.Repeat(" ", (55-len(line))))
-}
-
-func printCheck(check, process, restart bool) {
-}
-
-func sizeline(lines ...string) int {
-	size := 0
-	for _, line := range lines {
-		size += len(line)
-	}
-	if size <= Wwidth {
-		size = (Wwidth - 10) - size
-	} else {
-		fmt.Println(size, Wwidth)
-	}
-	return size
-}
-
-func printHandler(prog Program, idx int) {
-}
-
 func (app *App) printBox() {
 	clearScreen()
 	doc := strings.Builder{}
