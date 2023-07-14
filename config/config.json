@@ -5,5 +5,12 @@
         "extension": ".rs",
         "cmd": "make",
         "interval": 4
+    },
+    {
+        "path": "~/code/Rust/Binance-Trader-Bot",
+        "executable": "binance-trader-bot",
+        "extension": ".rs",
+        "cmd": "make",
+        "interval": 4
     }
 ]
