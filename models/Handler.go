@@ -9,12 +9,17 @@ import (
 	"time"
 )
 
-func HandlerSig() {
+func HandlerSig(app *App) {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
 	<-sig
+	fmt.Println("\nClose Program...")
+	app.Mu.Lock()
+	for _, prog := range app.Program {
+		killPid(&prog)
+	}
 	fmt.Println("Thank see you next time...")
-	// TODO store fd open for close here correctly
+	app.Mu.Unlock()
 	os.Exit(1)
 }
 
@@ -32,7 +37,7 @@ func Handler(prog *Program) bool {
 			time1, ok1 := files[path]
 			time2, ok2 := prog.Files[path]
 			if ok1 && ok2 && !time1.Equal(time2) {
-				fmt.Println(path, "Is Update")
+				prog.info = fmt.Sprint(path, "Is Update")
 				update = true
 			}
 		}

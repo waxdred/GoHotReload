@@ -60,6 +60,8 @@ func (app *App) Start() *App {
 	}
 
 	var wg sync.WaitGroup
+	go HandlerSig(app)
+
 	for i := range app.Program {
 		prog := &app.Program[i]
 		prog.check = true
@@ -79,9 +81,9 @@ func (app *App) Start() *App {
 						}
 						pid <- false
 						prog.info = ""
-						prog.TTY = ""
 						prog.Pid = 0
 						routine = false
+
 						prog.check = true
 					}
 				case <-ticker.C:

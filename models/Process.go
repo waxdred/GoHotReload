@@ -70,12 +70,12 @@ func execCmd(prog *Program) error {
 		tty, err := os.OpenFile(fmt.Sprint("/dev/", prog.TTY), os.O_RDWR, 0)
 		defer tty.Close()
 		if err != nil {
-			fmt.Println(err)
+			prog.info = err.Error()
 			return
 		}
 		parse := strings.Fields(prog.Cmd)
 		if len(parse) == 0 {
-			fmt.Println("empty command string")
+			prog.info = "empty command string"
 			return
 		}
 		args := parse[1:]
@@ -92,13 +92,13 @@ func execCmd(prog *Program) error {
 
 		err = cmd.Start()
 		if err != nil {
-			fmt.Println("failed to execute command:", err)
+			prog.info = fmt.Sprint("failed to execute command:", err)
 			return
 		}
 
 		err = cmd.Wait()
 		if err != nil {
-			fmt.Println("Erreur lors de l'attente de la commande:", err)
+			prog.info = fmt.Sprint("failed to waiting command:", err)
 			return
 		}
 	}()
@@ -110,7 +110,7 @@ func killPid(prog *Program) error {
 	prog.info = fmt.Sprint("Kill pid ", prog.pid)
 	err := prog.Process.Signal(os.Kill)
 	if err != nil {
-		fmt.Println("Kill process error:", err)
+		prog.info = fmt.Sprint("Kill process error:", err)
 		return err
 	}
 	return nil
@@ -136,7 +136,7 @@ func (app *App) process(prog *Program) {
 			prog.info = "Restart program"
 			time.Sleep(5 * time.Second)
 			if err := execCmd(prog); err != nil {
-				fmt.Println(err)
+				prog.info = fmt.Sprint(err)
 			}
 			prog.restart = false
 			break
