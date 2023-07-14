@@ -5,6 +5,9 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/charmbracelet/lipgloss"
+	// "github.com/charmbracelet/lipgloss"
 )
 
 func clearScreen() {
@@ -32,45 +35,88 @@ func printMem(title, value string) {
 }
 
 func printCheck(check, process, restart bool) {
-	checkStr := fmt.Sprintf("%-5v", check)
-	processStr := fmt.Sprintf("%-7v", process)
-	restartStr := fmt.Sprintf("%-8v", restart)
+}
 
-	fmt.Printf("├───────────────┼────────────────┬──────────────────┤\n")
-	fmt.Printf("│ Check  %v  │ Run   %v  │ Restart  %v│\n", checkStr, processStr, restartStr)
-	fmt.Printf("├───────────────┴────────────────┴──────────────────┤\n")
+func sizeline(lines ...string) int {
+	size := 0
+	for _, line := range lines {
+		size += len(line)
+	}
+	if size <= Wwidth {
+		size = (Wwidth - 10) - size
+	} else {
+		fmt.Println(size, Wwidth)
+	}
+	return size
 }
 
 func printHandler(prog Program, idx int) {
-	fmt.Printf("│                                                   │\n")
-	fmt.Printf("├───────────────┐                                   │\n")
-	fmt.Printf("│ Handler: %d    │                                   │\n", idx)
-	fmt.Printf("├───────────────┤                                   │\n")
-	fmt.Printf("│ Status        │                                   │\n")
-	printCheck(prog.check, prog.process, prog.restart)
-	printLine("Executable", prog.Executable)
-	printLine("Path      ", prog.Path)
-	printLine("Cmd       ", prog.Cmd)
-	printLine("Extension ", prog.Extension)
-	printLine("Pid       ", fmt.Sprint(prog.Pid))
-	printLine("TTY       ", prog.TTY)
-	printMem("Mem       ", ExecPsMem(prog)+"%%")
-	fmt.Printf("├───────────────────────────────────────────────────┤\n")
 }
 
 func (app *App) printBox() {
 	clearScreen()
-	top := "┌───────────────────────────────────────────────────┐\n"
-	bottom := "└───────────────────────────────────────────────────┘\n"
-	handler := fmt.Sprintf("│ handler .......... %d", len(app.Program))
-	fmt.Printf(top)
-	fmt.Printf("│                    GoHotRelaod                    │\n")
-	fmt.Printf("│                                                   │\n")
-	fmt.Printf(handler)
-	fmt.Printf(strings.Repeat(" ", (54 - len(handler))))
-	fmt.Printf("│\n")
-	for i, prog := range app.Program {
-		printHandler(prog, i)
+	doc := strings.Builder{}
+	handler := fmt.Sprintf("handler: %d", len(app.Program))
+	row := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		activeTab.Render("GoHotReaload"),
+		tab.Render(handler),
+	)
+	gap := tabGap.Render(strings.Repeat(" ", max(0, width-lipgloss.Width(row)-2)))
+	row = lipgloss.JoinHorizontal(lipgloss.Bottom, row, gap)
+	doc.WriteString(row + "\n")
+	// Title
+	{
+		var title strings.Builder
+		desc := lipgloss.JoinVertical(lipgloss.Left,
+			infoStyle.Render("From waxdred and G33KM44N38"+divider+url("https://github.com/waxdred/GoHotReload")),
+		)
+
+		row := lipgloss.JoinHorizontal(lipgloss.Top, title.String(), desc)
+		doc.WriteString(row + "\n")
 	}
-	fmt.Println(bottom)
+
+	// Dialog
+	{
+		for i, prog := range app.Program {
+			check := tab.Render("status: ", Style.Foreground(lipgloss.Color(orange)).Render("Checking"))
+			if prog.restart {
+				check = tab.Render("status: ", Style.Foreground(lipgloss.Color(red)).Render("Restart"))
+			} else if prog.process {
+				check = tab.Render("status: ", Style.Foreground(lipgloss.Color(green)).Render("Running"))
+			} else if prog.check {
+				check = tab.Render("status: ", Style.Foreground(lipgloss.Color(orange)).Render("Checking"))
+			}
+			row := lipgloss.JoinHorizontal(
+				lipgloss.Top,
+				activeTab.Render("handler: ", fmt.Sprint(i)),
+				check,
+			)
+			gap := tabGap.Render(strings.Repeat(" ", max(0, width-lipgloss.Width(row)-2)))
+			row = lipgloss.JoinHorizontal(lipgloss.Bottom, row, gap)
+			exec := Style.Render("Executable:", Style.Foreground(lipgloss.Color(orange)).Render(prog.Executable))
+			path := Style.Render("Path      :", Style.Foreground(lipgloss.Color(orange)).Render(prog.Path))
+			Cmd := Style.Render("Cmd       :", Style.Foreground(lipgloss.Color(orange)).Render(prog.Cmd))
+			Extension := Style.Render("Extension :", Style.Foreground(lipgloss.Color(orange)).Render(prog.Extension))
+			Pid := Style.Render("Pid       :", Style.Foreground(lipgloss.Color(orange)).Render(fmt.Sprint(prog.Pid)))
+			TTY := Style.Render("TTY       :", Style.Foreground(lipgloss.Color(orange)).Render(fmt.Sprint(prog.TTY)))
+			Mem := Style.Render(
+				"Men       :",
+				Style.Foreground(lipgloss.Color(orange)).Render(fmt.Sprint(ExecPsMem(prog), "%%")),
+			)
+			info := Style.Render("info      :", Style.Foreground(lipgloss.Color(green)).Render(prog.info))
+			doc.WriteString(
+				row + "\n" + exec + "\n" + path + "\n" + Cmd + "\n" + Extension + "\n" + Pid + "\n" + TTY + "\n" + Mem + "\n" + info + "\n\n",
+			)
+		}
+	}
+
+	fmt.Printf(doc.String())
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }

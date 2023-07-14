@@ -66,9 +66,7 @@ func (app *App) execPs(prog *Program) error {
 }
 
 func execCmd(prog *Program) error {
-	// open tty fd
 	go func() {
-		// fmt.Println("Open tty")
 		tty, err := os.OpenFile(fmt.Sprint("/dev/", prog.TTY), os.O_RDWR, 0)
 		defer tty.Close()
 		if err != nil {
@@ -109,28 +107,33 @@ func execCmd(prog *Program) error {
 }
 
 func killPid(prog *Program) error {
+	prog.info = fmt.Sprint("Kill pid ", prog.pid)
 	err := prog.Process.Signal(os.Kill)
 	if err != nil {
 		fmt.Println("Kill process error:", err)
 		return err
 	}
-	// fmt.Println("Process are kill")
 	return nil
 }
 
 func (app *App) process(prog *Program) {
 	// fmt.Println("Process", prog.Executable, "Running")
 	prog.process = true
+	prog.info = "Programm Running"
 	for {
 		update := Handler(prog)
 		if !app.handlerProcess(prog) {
-			fmt.Println("Pid stop by user")
+			prog.info = "Pid stop by user"
+			prog.check = true
+			prog.process = false
 			return
 		}
+
 		if update {
 			prog.process = false
 			killPid(prog)
 			prog.restart = true
+			prog.info = "Restart program"
 			time.Sleep(5 * time.Second)
 			if err := execCmd(prog); err != nil {
 				fmt.Println(err)
