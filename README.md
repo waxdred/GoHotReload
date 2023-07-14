@@ -25,7 +25,7 @@ Before using GoHotReload, you need to configure the config.json file. This file 
 - ```interval```: The interval in seconds at which the program should be checked for changes. Default value is 4.
 
 ## Configuring 
-The config.json file is used to define the programs you want to monitor and restart. Here's an example of how to fill the config.json file:
+You config multi config.json files is used to define the programs you want to monitor and restart. Here's an example of how to fill the config.json file:
 ```json
 [
   {
@@ -45,14 +45,29 @@ The config.json file is used to define the programs you want to monitor and rest
 ]
 ```
 
+
+![](https://i.imgur.com/lM1HcCG.png)
+
 In this example, we have two programs to monitor. The first program is located in /path/to/program1 directory, has an executable file named program1, and the command to execute it is go run main.go. The second program is located in /path/to/program2 directory, has an executable file named program2, and the command to execute it is python main.py.
 Make sure to provide the correct paths, executable names, file extensions, and commands for your programs.
+
+![](https://i.imgur.com/XAz6AJ5.png)
 
 ## Running
 To run the GoHotReload program, execute the main.go file. The program will read the config.json file, parse the configuration, and start monitoring the specified programs. If there are any errors during the parsing or execution, they will be displayed in the console.
 ```shell
-go run main.go
+make
 ```
+you can also build for add on your PATH 
+```shell
+make build
+```
+- add on your PATH
+- Execute program
+```shell
+gohot
+```
+![](https://i.imgur.com/Cy7hLGC.gif)
 
 ## Structure
 The GoHotReload program consists of the following files:
