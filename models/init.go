@@ -18,32 +18,41 @@ func New() *App {
 	clearScreen()
 	executablePath, err := os.Executable()
 	if err != nil {
-		fmt.Println("Erreur lors de la récupération du chemin du binaire :", err)
+		fmt.Println("Error retrieving executable path:", err)
 		return app
 	}
 	binaryPath := filepath.Dir(executablePath)
 	yamlFile, err := ioutil.ReadFile(binaryPath + "/config/config.yml")
 	if err != nil {
-		log.Fatalf("Erreur lors de la lecture du fichier YAML : %v", err)
+		log.Fatalf("Error reading YAML file: %v", err)
 	}
 	var config Configs
 	err = yaml.Unmarshal(yamlFile, &config)
 	if err != nil {
-		log.Fatalf("Erreur lors de la désérialisation du fichier YAML : %v", err)
+		log.Fatalf("Error deserializing YAML file: %v", err)
 	}
 	app.Config = config.Configs
 	if len(app.Config) > 1 {
-		fmt.Println(Style.Foreground(lipgloss.Color(blue)).Margin(1, 1).Render("Select you config"))
+		fmt.Println(Style.Foreground(lipgloss.Color(blue)).Margin(1, 1).Render("Select your config"))
 		app.OptionsView()
+		for i := range app.Config {
+			conf := app.Config[i]
+			if conf.Name == app.ConfigSelect {
+				fmt.Println("ok", i)
+				app.Program = append(app.Program, *NewProg(&conf))
+			}
+		}
+	} else if len(app.Config) != 0 {
+		app.Program = append(app.Program, *NewProg(&app.Config[0]))
+	} else {
+		log.Fatal("Error")
 	}
 	for i := range app.Config {
 		conf := app.Config[i]
 		if conf.Name == app.ConfigSelect {
-			fmt.Println("ok", i)
 			app.Program = append(app.Program, *NewProg(&conf))
 		}
 	}
-	fmt.Println(app.Program[0].Config.Name)
 	// clearScreen()
 	return app
 }
