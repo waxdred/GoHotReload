@@ -1,0 +1,21 @@
+configs:
+  - name: delivery
+    cmd: go run .
+    executable: testKylian
+    extension: .go
+    interval: 4
+    path: "/Users/kylianmayanga/myproject/freelance/site/minata/src/api/delivery/"
+  
+  - name: chat-app
+    cmd: go run .
+    executable: testKylian
+    extension: .go
+    interval: 4
+    path: "/Users/kylianmayanga/myproject/freelance/site/minata/src/api/chat/"
+
+  - name: baba_coiffure
+    cmd: npm run start
+    executable: testKylian
+    extension: *.*
+    interval: 4
+    path: "/Users/kylianmayanga/myproject/freelance/site/baba_coiffure/mobile_babacoiffure/"

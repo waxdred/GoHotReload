@@ -73,14 +73,14 @@ func execCmd(prog *Program) error {
 			prog.info = err.Error()
 			return
 		}
-		parse := strings.Fields(prog.Cmd)
+		parse := strings.Fields(prog.Config.Cmd)
 		if len(parse) == 0 {
 			prog.info = "empty command string"
 			return
 		}
 		args := parse[1:]
 		cmd := exec.Command(parse[0], args...)
-		cmd.Dir = prog.Path
+		cmd.Dir = prog.Config.Path
 
 		// change stdin and out in the tty
 		cmd.Stdin = tty
@@ -141,6 +141,6 @@ func (app *App) process(prog *Program) {
 			prog.restart = false
 			break
 		}
-		time.Sleep(time.Duration(prog.Interval) * time.Second)
+		time.Sleep(time.Duration(prog.Config.Interval) * time.Second)
 	}
 }
