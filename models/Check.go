@@ -9,7 +9,7 @@ import (
 
 func (app *App) checkPath() *App {
 	for _, prog := range app.Program {
-		_, err := os.Stat(prog.Path)
+		_, err := os.Stat(prog.Config.Path)
 		if err != nil {
 			app.error = err
 			break
@@ -25,30 +25,30 @@ func (app *App) checkPath() *App {
 func (app *App) CheckingParse() *App {
 	for i := range app.Program {
 		prog := &app.Program[i]
-		if prog.Cmd == "" {
+		if prog.Config.Cmd == "" {
 			app.error = errors.New("Please add command")
 			break
-		} else if prog.Interval == 0 {
-			prog.Interval = 4
-		} else if prog.Extension == "" {
-			prog.Extension = ".go"
-		} else if prog.Path == "" {
-			prog.Path = "./"
+		} else if prog.Config.Interval == 0 {
+			prog.Config.Interval = 4
+		} else if prog.Config.Extension == "" {
+			prog.Config.Extension = ".go"
+		} else if prog.Config.Path == "" {
+			prog.Config.Path = "./"
 		}
-		ok := strings.HasPrefix(prog.Extension, ".")
+		ok := strings.HasPrefix(prog.Config.Extension, ".")
 		if !ok {
 			app.error = errors.New("Please use correct extenstion:")
 			break
 		}
-		ok = strings.HasPrefix(prog.Path, "~")
+		ok = strings.HasPrefix(prog.Config.Path, "~")
 		if ok {
 			homeDire, err := os.UserHomeDir()
 			if err != nil {
 				app.error = err
 				break
 			}
-			prog.Path = strings.TrimPrefix(prog.Path, "~")
-			prog.Path = fmt.Sprint(homeDire, prog.Path)
+			prog.Config.Path = strings.TrimPrefix(prog.Config.Path, "~")
+			prog.Config.Path = fmt.Sprint(homeDire, prog.Config.Path)
 		}
 	}
 	return app

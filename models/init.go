@@ -1,14 +1,14 @@
 package models
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
-	"path"
 	"path/filepath"
 
 	"github.com/charmbracelet/lipgloss"
+	"gopkg.in/yaml.v2"
 )
 
 func New() *App {
@@ -18,41 +18,36 @@ func New() *App {
 	clearScreen()
 	executablePath, err := os.Executable()
 	if err != nil {
-		fmt.Println("Erreur lors de la récupération du chemin du binaire :", err)
+		fmt.Println("Error retrieving executable path:", err)
 		return app
 	}
 	binaryPath := filepath.Dir(executablePath)
-	dirfile, err := ioutil.ReadDir(binaryPath + "/config/")
+	yamlFile, err := ioutil.ReadFile(binaryPath + "/config/config.yml")
 	if err != nil {
-		app.error = err
-		return app
+		log.Fatalf("Error reading YAML file: %v", err)
 	}
-	for _, file := range dirfile {
-		extend := path.Ext(file.Name())
-		if extend == ".json" {
-			app.configFile = append(app.configFile, file.Name())
-		}
+	var config Configs
+	err = yaml.Unmarshal(yamlFile, &config)
+	if err != nil {
+		log.Fatalf("Error deserializing YAML file: %v", err)
 	}
-	if len(app.configFile) > 1 {
-		fmt.Println(Style.Foreground(lipgloss.Color(blue)).Margin(1, 1).Render("Select you config"))
+	app.Config = config.Configs
+	if len(app.Config) > 1 {
+		fmt.Println(Style.Foreground(lipgloss.Color(blue)).Margin(1, 1).Render("Select your config"))
 		app.OptionsView()
+		for i := range app.Config {
+			conf := app.Config[i]
+			if conf.Name == app.ConfigSelect {
+				fmt.Println("ok", i)
+				app.Program = append(app.Program, *NewProg(&conf))
+			}
+		}
+	} else if len(app.Config) != 0 {
+		app.Program = append(app.Program, *NewProg(&app.Config[0]))
+	} else {
+		log.Fatal("Error")
 	}
 	clearScreen()
-	if app.ConfigSelect == "" && len(app.configFile) == 1 {
-		app.ConfigSelect = app.configFile[0]
-	}
-	conf := binaryPath + "/config/" + app.ConfigSelect
-	data, err := ioutil.ReadFile(conf)
-	if err != nil {
-		app.error = err
-		return app
-	}
-
-	err = json.Unmarshal(data, &app.Program)
-	if err != nil {
-		app.error = err
-		return app
-	}
 	return app
 }
 

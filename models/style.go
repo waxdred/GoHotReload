@@ -49,11 +49,12 @@ func (m model) View() string {
 func (app *App) OptionsView() {
 	columns := []table.Column{
 		{Title: "id", Width: 4},
-		{Title: "config", Width: 40},
+		{Title: "config", Width: 20},
+		{Title: "executable", Width: 30},
 	}
 	rows := []table.Row{}
-	for i, file := range app.configFile {
-		rows = append(rows, table.Row{fmt.Sprint(i), file})
+	for i, conf := range app.Config {
+		rows = append(rows, table.Row{fmt.Sprint(i), conf.Name, conf.Executable})
 	}
 	t := table.New(
 		table.WithColumns(columns),
