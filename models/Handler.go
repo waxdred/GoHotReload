@@ -23,7 +23,7 @@ func HandlerSig(app *App) {
 	os.Exit(1)
 }
 
-func Handler(prog *Program) bool {
+func (app *App) Handler(prog *Program) bool {
 	files := make(map[string]time.Time)
 	update := false
 

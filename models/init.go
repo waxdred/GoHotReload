@@ -15,6 +15,7 @@ func New() *App {
 	app := &App{}
 	app.Mu.Lock()
 	defer app.Mu.Unlock()
+	app.Call = make(chan bool)
 	clearScreen()
 	executablePath, err := os.Executable()
 	if err != nil {
@@ -43,8 +44,7 @@ func New() *App {
 			app.Program = append(app.Program, *NewProg(&conf))
 		}
 	}
-	fmt.Println(app.Program[0].Config.Name)
-	// clearScreen()
+	clearScreen()
 	return app
 }
 

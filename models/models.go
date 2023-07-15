@@ -17,6 +17,8 @@ type App struct {
 	ConfigSelect string
 	config       int
 	Config       []Config `yaml:"configs"`
+	Call         chan bool
+	Notify       chan bool
 	model        *model
 	error        error
 }
@@ -26,11 +28,11 @@ type Configs struct {
 }
 
 func (app *App) Listen() *App {
-	ticker := time.NewTicker(2 * time.Second)
+	// ticker := time.NewTicker(2 * time.Second)
 	go func() {
 		for {
 			select {
-			case <-ticker.C:
+			case <-app.Call:
 				app.Mu.Lock()
 				app.printBox()
 				app.Mu.Unlock()
@@ -77,6 +79,7 @@ func (app *App) Start() *App {
 
 	var wg sync.WaitGroup
 	go HandlerSig(app)
+	app.Call <- true
 
 	for i := range app.Program {
 		prog := &app.Program[i]
@@ -99,7 +102,6 @@ func (app *App) Start() *App {
 						prog.info = ""
 						prog.Pid = 0
 						routine = false
-
 						prog.check = true
 					}
 				case <-ticker.C:
@@ -119,6 +121,7 @@ func (app *App) Start() *App {
 							if process.Executable() == tmp {
 								prog.info = fmt.Sprintf("%s: PID found: %d\n", prog.Config.Executable, process.Pid())
 								prog.Pid = process.Pid()
+								app.Call <- true
 								app.execPs(prog)
 								routine = true
 								prog.check = false
