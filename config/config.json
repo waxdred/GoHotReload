@@ -1,9 +1,0 @@
-[
-    {
-        "path": "~/path",
-        "executable": "name of your executable",
-        "extension": ".extension",
-        "cmd": "command for run your program",
-        "interval": 4
-    }
-]

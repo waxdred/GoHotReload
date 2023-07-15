@@ -1,14 +1,14 @@
 package models
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
-	"path"
 	"path/filepath"
 
 	"github.com/charmbracelet/lipgloss"
+	"gopkg.in/yaml.v2"
 )
 
 func New() *App {
@@ -22,37 +22,29 @@ func New() *App {
 		return app
 	}
 	binaryPath := filepath.Dir(executablePath)
-	dirfile, err := ioutil.ReadDir(binaryPath + "/config/")
+	yamlFile, err := ioutil.ReadFile(binaryPath + "/config/config.yml")
 	if err != nil {
-		app.error = err
-		return app
+		log.Fatalf("Erreur lors de la lecture du fichier YAML : %v", err)
 	}
-	for _, file := range dirfile {
-		extend := path.Ext(file.Name())
-		if extend == ".json" {
-			app.configFile = append(app.configFile, file.Name())
-		}
+	var config Configs
+	err = yaml.Unmarshal(yamlFile, &config)
+	if err != nil {
+		log.Fatalf("Erreur lors de la désérialisation du fichier YAML : %v", err)
 	}
-	if len(app.configFile) > 1 {
+	app.Config = config.Configs
+	if len(app.Config) > 1 {
 		fmt.Println(Style.Foreground(lipgloss.Color(blue)).Margin(1, 1).Render("Select you config"))
 		app.OptionsView()
 	}
-	clearScreen()
-	if app.ConfigSelect == "" && len(app.configFile) == 1 {
-		app.ConfigSelect = app.configFile[0]
+	for i := range app.Config {
+		conf := app.Config[i]
+		if conf.Name == app.ConfigSelect {
+			fmt.Println("ok", i)
+			app.Program = append(app.Program, *NewProg(&conf))
+		}
 	}
-	conf := binaryPath + "/config/" + app.ConfigSelect
-	data, err := ioutil.ReadFile(conf)
-	if err != nil {
-		app.error = err
-		return app
-	}
-
-	err = json.Unmarshal(data, &app.Program)
-	if err != nil {
-		app.error = err
-		return app
-	}
+	fmt.Println(app.Program[0].Config.Name)
+	// clearScreen()
 	return app
 }
 

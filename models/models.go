@@ -14,11 +14,15 @@ const PROCESSLEN = 16
 type App struct {
 	Program      []Program
 	Mu           sync.Mutex
-	config       int
-	configFile   []string
 	ConfigSelect string
+	config       int
+	Config       []Config `yaml:"configs"`
 	model        *model
 	error        error
+}
+
+type Configs struct {
+	Configs []Config `yaml:"configs"`
 }
 
 func (app *App) Listen() *App {
@@ -36,21 +40,33 @@ func (app *App) Listen() *App {
 	return app
 }
 
+type Config struct {
+	Name       string `yaml:"name"`
+	Cmd        string `yaml:"cmd"`
+	Executable string `yaml:"executable"`
+	Extension  string `yaml:"extension"`
+	Interval   int    `yaml:"interval"`
+	Path       string `yaml:"path"`
+}
+
 type Program struct {
-	Pid        int
-	Process    *os.Process
-	Files      map[string]time.Time
-	Path       string `json:"path"`
-	Executable string `json:"executable"`
-	Extension  string `json:"extension"`
-	Cmd        string `json:"cmd"`
-	Interval   int    `json:"interval"`
-	TTY        string
-	pid        chan bool
-	check      bool
-	process    bool
-	restart    bool
-	info       string
+	Pid     int
+	Process *os.Process
+	Files   map[string]time.Time
+	Config  *Config `yaml:"configs"`
+	TTY     string
+	pid     chan bool
+	check   bool
+	process bool
+	restart bool
+	info    string
+}
+
+func NewProg(config *Config) *Program {
+	prog := &Program{
+		Config: config,
+	}
+	return prog
 }
 
 func (app *App) Start() *App {
@@ -69,7 +85,7 @@ func (app *App) Start() *App {
 		go func() {
 			pid := make(chan bool, 1)
 			defer wg.Done()
-			ticker := time.NewTicker(time.Duration(prog.Interval) * time.Second)
+			ticker := time.NewTicker(time.Duration(prog.Config.Interval) * time.Second)
 			routine := false
 			for {
 				prog.info = "Search Programm..."
@@ -95,13 +111,13 @@ func (app *App) Start() *App {
 						}
 						for _, process := range processes {
 							tmp := ""
-							if len(prog.Executable) > PROCESSLEN {
-								tmp = prog.Executable[:PROCESSLEN]
+							if len(prog.Config.Executable) > PROCESSLEN {
+								tmp = prog.Config.Executable[:PROCESSLEN]
 							} else {
-								tmp = prog.Executable
+								tmp = prog.Config.Executable
 							}
 							if process.Executable() == tmp {
-								prog.info = fmt.Sprintf("%s: PID found: %d\n", prog.Executable, process.Pid())
+								prog.info = fmt.Sprintf("%s: PID found: %d\n", prog.Config.Executable, process.Pid())
 								prog.Pid = process.Pid()
 								app.execPs(prog)
 								routine = true

@@ -27,12 +27,12 @@ func Handler(prog *Program) bool {
 	files := make(map[string]time.Time)
 	update := false
 
-	err := filepath.Walk(prog.Path, func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(prog.Config.Path, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
-		if !info.IsDir() && filepath.Ext(path) == prog.Extension {
+		if !info.IsDir() && filepath.Ext(path) == prog.Config.Extension {
 			files[path] = info.ModTime()
 			time1, ok1 := files[path]
 			time2, ok2 := prog.Files[path]
