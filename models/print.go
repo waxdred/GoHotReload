@@ -4,13 +4,21 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 )
 
 func clearScreen() {
-	cmd := exec.Command("clear") // Use "cls" instead of "clear" on Windows
+	osName := runtime.GOOS
+	var arg string
+	if osName == "windows" {
+		arg = "cls"
+	} else {
+		arg = "clear"
+	}
+	cmd := exec.Command(arg)
 	cmd.Stdout = os.Stdout
 	cmd.Run()
 }
@@ -18,7 +26,7 @@ func clearScreen() {
 func (app *App) printBox(prog *Program) {
 	clearScreen()
 	doc := strings.Builder{}
-	handler := fmt.Sprintf("handler: %d", len(app.Program))
+	handler := fmt.Sprintf("handler: %s", app.Program.Config.Name)
 	row := lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		activeTab.Render("GoHotReaload"),
@@ -56,7 +64,7 @@ func (app *App) printBox(prog *Program) {
 		row = lipgloss.JoinHorizontal(lipgloss.Bottom, row, gap)
 		exec := Style.Render("Executable:", Style.Foreground(lipgloss.Color(orange)).Render(prog.Config.Executable))
 		path := Style.Render("Path      :", Style.Foreground(lipgloss.Color(orange)).Render(prog.Config.Path))
-		Cmd := Style.Render("Cmd       :", Style.Foreground(lipgloss.Color(orange)).Render(prog.Config.Cmd))
+		Cmd := Style.Render("Cmd       :", Style.Foreground(lipgloss.Color(orange)).Render(prog.Config.Cmd[0]))
 		Extension := Style.Render("Extension :", Style.Foreground(lipgloss.Color(orange)).Render(prog.Config.Extension))
 		Pid := Style.Render("Pid       :", Style.Foreground(lipgloss.Color(orange)).Render(fmt.Sprint(prog.Pid)))
 		Mem := Style.Render(

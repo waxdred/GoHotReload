@@ -5,7 +5,9 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 
 	"github.com/charmbracelet/lipgloss"
 	"gopkg.in/yaml.v2"
@@ -14,8 +16,10 @@ import (
 func New() *App {
 	app := &App{}
 	app.Mu.Lock()
+	app.Chan.signalChan = make(chan os.Signal, 1)
+	signal.Notify(app.Chan.signalChan, syscall.SIGHUP)
 	defer app.Mu.Unlock()
-	app.Chan.Call = make(chan bool)
+	app.Chan.Call = make(chan bool, 1)
 	clearScreen()
 	executablePath, err := os.Executable()
 	if err != nil {
@@ -51,7 +55,7 @@ func New() *App {
 	for i := range app.Config {
 		conf := app.Config[i]
 		if conf.Name == app.ConfigSelect {
-			app.Program = append(app.Program, *NewProg(&conf))
+			app.Program = *NewProg(&conf)
 		}
 	}
 	clearScreen()

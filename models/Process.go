@@ -12,11 +12,13 @@ import (
 )
 
 func (app *App) handlerProcess(prog *Program) bool {
-	prog.Process, app.error = os.FindProcess(prog.Pid)
-	if app.error != nil {
+	var err error
+	prog.Process, err = os.FindProcess(prog.Pid)
+	if err != nil {
+		fmt.Println(app.error)
 		return false
 	}
-	err := prog.Process.Signal(syscall.Signal(0))
+	err = prog.Process.Signal(syscall.Signal(0))
 	if err == nil {
 		return true
 	}
@@ -68,98 +70,84 @@ func (app *App) execPs(prog *Program) error {
 
 func execCmd(prog *Program) error {
 	go func() {
-		parse := strings.Fields(prog.Config.Cmd)
-		if len(parse) == 0 {
-			prog.info = "empty command string"
-			return
-		}
-		args := parse[1:]
-		cmd := exec.Command(parse[0], args...)
-		cmd.Dir = prog.Config.Path
-
-		stdout, err := cmd.StdoutPipe()
-		if err != nil {
-			prog.info = fmt.Sprint("failed to get stdout pipe:", err)
-			return
-		}
-		stderr, err := cmd.StderrPipe()
-		if err != nil {
-			prog.info = fmt.Sprint("failed to get stderr pipe:", err)
-			return
-		}
-
-		err = cmd.Start()
-		if err != nil {
-			prog.info = fmt.Sprint("failed to execute command:", err)
-			return
-		}
-
-		go func() {
-			scanner := bufio.NewScanner(stdout)
-			for scanner.Scan() {
-				prog.Chan.stdout <- scanner.Text()
+		for _, cmds := range prog.Config.Cmd {
+			parse := strings.Fields(cmds)
+			if len(parse) == 0 {
+				prog.info = "empty command string"
+				return
 			}
-		}()
+			args := parse[1:]
+			cmd := exec.Command(parse[0], args...)
+			cmd.Dir = prog.Config.Path
 
-		go func() {
-			scanner := bufio.NewScanner(stderr)
-			for scanner.Scan() {
-				prog.Chan.stderr <- scanner.Text()
+			stdout, err := cmd.StdoutPipe()
+			if err != nil {
+				prog.info = fmt.Sprint("failed to get stdout pipe:", err)
+				return
 			}
-		}()
+			stderr, err := cmd.StderrPipe()
+			if err != nil {
+				prog.info = fmt.Sprint("failed to get stderr pipe:", err)
+				return
+			}
 
-		err = cmd.Wait()
-		if err != nil {
-			prog.info = fmt.Sprint("failed to waiting command:", err)
-			return
+			err = cmd.Start()
+			if err != nil {
+				prog.info = fmt.Sprint("failed to execute command:", err)
+				return
+			}
+
+			go func() {
+				scanner := bufio.NewScanner(stdout)
+				for scanner.Scan() {
+					prog.Chan.stdout <- scanner.Text()
+				}
+			}()
+
+			go func() {
+				scanner := bufio.NewScanner(stderr)
+				for scanner.Scan() {
+					prog.Chan.stderr <- scanner.Text()
+				}
+			}()
+			err = cmd.Wait()
+			stderr.Close()
+			stdout.Close()
+			// cmd.ProcessState
+			if err != nil {
+				prog.info = fmt.Sprint("failed to waiting command:", err)
+				return
+			}
 		}
 	}()
-
+	prog.restart = true
+	prog.process = false
+	prog.check = false
 	return nil
 }
 
 func killPid(prog *Program) error {
-	prog.info = fmt.Sprintf("Kill pid %d", prog.Chan.pid)
+	prog.info = fmt.Sprintf("Kill pid %d", prog.Pid)
 	if prog.Process != nil {
 		err := prog.Process.Signal(syscall.SIGHUP)
 		if err != nil {
-			prog.info = fmt.Sprintf("Kill process error: %v", err)
+			fmt.Println(prog.info)
 			return err
 		}
+		prog.Process.Wait()
+		prog.Chan.kill <- true
+		prog.Pid = 0
 	}
 	return nil
-}
-
-func (app *App) notify(prog *Program) {
 }
 
 func (app *App) process(prog *Program) {
 	prog.process = true
 	prog.info = "Programm Running"
-	app.Chan.Call <- true
+	// app.Chan.Call <- true
 	for {
-		update := app.Handler(prog)
-		if !app.handlerProcess(prog) {
-			prog.info = "Pid stop by user"
-			prog.check = true
-			prog.process = false
-			app.Chan.Call <- true
-			return
+		if err := execCmd(prog); err != nil {
+			prog.info = fmt.Sprint(err)
 		}
-
-		if update {
-			prog.process = false
-			killPid(prog)
-			app.Chan.Call <- true
-			prog.restart = true
-			prog.info = "Restart program"
-			app.Chan.Call <- true
-			if err := execCmd(prog); err != nil {
-				prog.info = fmt.Sprint(err)
-			}
-			prog.restart = false
-			break
-		}
-		// time.Sleep(time.Duration(prog.Config.Interval) * time.Second)
 	}
 }
