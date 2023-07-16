@@ -25,24 +25,29 @@ Before using GoHotReload, you need to configure the config.json file. This file 
 - ```interval```: The interval in seconds at which the program should be checked for changes. Default value is 4.
 
 ## Configuring 
-You config multi config.json files is used to define the programs you want to monitor and restart. Here's an example of how to fill the config.json file:
-```json
-[
-  {
-    "path": "/path/to/program1",
-    "executable": "program1",
-    "extension": ".go",
-    "cmd": "go run main.go",
-    "interval": 4
-  },
-  {
-    "path": "/path/to/program2",
-    "executable": "program2",
-    "extension": ".py",
-    "cmd": "python main.py",
-    "interval": 6
-  }
-]
+You config multi config.yml files is used to define the programs you want to monitor and restart. Here's an example of how to fill the config.json file:
+```yml
+configs:
+  - name: config1
+    cmd: command for run your program
+    executable: name of your executable
+    extension: .extension
+    interval: 4
+    path: "~/path1"
+  
+  - name: config2
+    cmd: command for run your program
+    executable: name of your executable
+    extension: .extension
+    interval: 5
+    path: "~/path2"
+  
+  - name: config3
+    cmd: command for run your program
+    executable: name of your executable
+    extension: .extension
+    interval: 6
+    path: "~/path3"
 ```
 
 
