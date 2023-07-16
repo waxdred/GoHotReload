@@ -1,13 +1,14 @@
 package models
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 	"syscall"
-	"time"
+	// "time"
 )
 
 func (app *App) handlerProcess(prog *Program) bool {
@@ -67,12 +68,6 @@ func (app *App) execPs(prog *Program) error {
 
 func execCmd(prog *Program) error {
 	go func() {
-		tty, err := os.OpenFile(fmt.Sprint("/dev/", prog.TTY), os.O_RDWR, 0)
-		defer tty.Close()
-		if err != nil {
-			prog.info = err.Error()
-			return
-		}
 		parse := strings.Fields(prog.Config.Cmd)
 		if len(parse) == 0 {
 			prog.info = "empty command string"
@@ -82,12 +77,15 @@ func execCmd(prog *Program) error {
 		cmd := exec.Command(parse[0], args...)
 		cmd.Dir = prog.Config.Path
 
-		// change stdin and out in the tty
-		cmd.Stdin = tty
-		cmd.Stdout = tty
-		cmd.Stderr = tty
-		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Setsid: true,
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			prog.info = fmt.Sprint("failed to get stdout pipe:", err)
+			return
+		}
+		stderr, err := cmd.StderrPipe()
+		if err != nil {
+			prog.info = fmt.Sprint("failed to get stderr pipe:", err)
+			return
 		}
 
 		err = cmd.Start()
@@ -95,6 +93,20 @@ func execCmd(prog *Program) error {
 			prog.info = fmt.Sprint("failed to execute command:", err)
 			return
 		}
+
+		go func() {
+			scanner := bufio.NewScanner(stdout)
+			for scanner.Scan() {
+				prog.Chan.stdout <- scanner.Text()
+			}
+		}()
+
+		go func() {
+			scanner := bufio.NewScanner(stderr)
+			for scanner.Scan() {
+				prog.Chan.stderr <- scanner.Text()
+			}
+		}()
 
 		err = cmd.Wait()
 		if err != nil {
@@ -107,40 +119,47 @@ func execCmd(prog *Program) error {
 }
 
 func killPid(prog *Program) error {
-	prog.info = fmt.Sprint("Kill pid ", prog.pid)
-	err := prog.Process.Signal(os.Kill)
-	if err != nil {
-		prog.info = fmt.Sprint("Kill process error:", err)
-		return err
+	prog.info = fmt.Sprintf("Kill pid %d", prog.Chan.pid)
+	if prog.Process != nil {
+		err := prog.Process.Signal(syscall.SIGHUP)
+		if err != nil {
+			prog.info = fmt.Sprintf("Kill process error: %v", err)
+			return err
+		}
 	}
 	return nil
 }
 
+func (app *App) notify(prog *Program) {
+}
+
 func (app *App) process(prog *Program) {
-	// fmt.Println("Process", prog.Executable, "Running")
 	prog.process = true
 	prog.info = "Programm Running"
+	app.Chan.Call <- true
 	for {
-		update := Handler(prog)
+		update := app.Handler(prog)
 		if !app.handlerProcess(prog) {
 			prog.info = "Pid stop by user"
 			prog.check = true
 			prog.process = false
+			app.Chan.Call <- true
 			return
 		}
 
 		if update {
 			prog.process = false
 			killPid(prog)
+			app.Chan.Call <- true
 			prog.restart = true
 			prog.info = "Restart program"
-			time.Sleep(5 * time.Second)
+			app.Chan.Call <- true
 			if err := execCmd(prog); err != nil {
 				prog.info = fmt.Sprint(err)
 			}
 			prog.restart = false
 			break
 		}
-		time.Sleep(time.Duration(prog.Config.Interval) * time.Second)
+		// time.Sleep(time.Duration(prog.Config.Interval) * time.Second)
 	}
 }
