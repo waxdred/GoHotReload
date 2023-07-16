@@ -1,6 +1,7 @@
 package models
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
@@ -67,12 +68,6 @@ func (app *App) execPs(prog *Program) error {
 
 func execCmd(prog *Program) error {
 	go func() {
-		tty, err := os.OpenFile(fmt.Sprint("/dev/", prog.TTY), os.O_RDWR, 0)
-		defer tty.Close()
-		if err != nil {
-			prog.info = err.Error()
-			return
-		}
 		parse := strings.Fields(prog.Config.Cmd)
 		if len(parse) == 0 {
 			prog.info = "empty command string"
@@ -82,12 +77,18 @@ func execCmd(prog *Program) error {
 		cmd := exec.Command(parse[0], args...)
 		cmd.Dir = prog.Config.Path
 
-		// change stdin and out in the tty
-		cmd.Stdin = tty
-		cmd.Stdout = tty
-		cmd.Stderr = tty
-		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Setsid: true,
+		stdoutChan := make(chan string)
+		stderrChan := make(chan string)
+
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			prog.info = fmt.Sprint("failed to get stdout pipe:", err)
+			return
+		}
+		stderr, err := cmd.StderrPipe()
+		if err != nil {
+			prog.info = fmt.Sprint("failed to get stderr pipe:", err)
+			return
 		}
 
 		err = cmd.Start()
@@ -95,6 +96,39 @@ func execCmd(prog *Program) error {
 			prog.info = fmt.Sprint("failed to execute command:", err)
 			return
 		}
+
+		go func() {
+			scanner := bufio.NewScanner(stdout)
+			for scanner.Scan() {
+				stdoutChan <- scanner.Text()
+			}
+			close(stdoutChan)
+		}()
+
+		go func() {
+			scanner := bufio.NewScanner(stderr)
+			for scanner.Scan() {
+				stderrChan <- scanner.Text()
+			}
+			close(stderrChan)
+		}()
+
+		// TODO need get un string var
+		go func() {
+			defer close(stdoutChan)
+			defer close(stderrChan)
+			for {
+				select {
+				case out := <-stdoutChan:
+					fmt.Println("Standard output:", out)
+				case err := <-stderrChan:
+					fmt.Println("Standard error:", err)
+				case <-prog.reload:
+					fmt.Println("Close")
+					break
+				}
+			}
+		}()
 
 		err = cmd.Wait()
 		if err != nil {
@@ -113,6 +147,7 @@ func killPid(prog *Program) error {
 		prog.info = fmt.Sprintf("Kill process error: %v", err)
 		return err
 	}
+	prog.reload <- true
 	return nil
 }
 

@@ -61,14 +61,13 @@ func (app *App) printBox() {
 			Cmd := Style.Render("Cmd       :", Style.Foreground(lipgloss.Color(orange)).Render(prog.Config.Cmd))
 			Extension := Style.Render("Extension :", Style.Foreground(lipgloss.Color(orange)).Render(prog.Config.Extension))
 			Pid := Style.Render("Pid       :", Style.Foreground(lipgloss.Color(orange)).Render(fmt.Sprint(prog.Pid)))
-			TTY := Style.Render("TTY       :", Style.Foreground(lipgloss.Color(orange)).Render(fmt.Sprint(prog.TTY)))
 			Mem := Style.Render(
 				"Men       :",
 				Style.Foreground(lipgloss.Color(orange)).Render(fmt.Sprint(ExecPsMem(prog), "%%")),
 			)
 			info := Style.Render("info      :", Style.Foreground(lipgloss.Color(green)).Render(prog.info))
 			doc.WriteString(
-				row + "\n" + exec + "\n" + path + "\n" + Cmd + "\n" + Extension + "\n" + Pid + "\n" + TTY + "\n" + Mem + "\n" + info + "\n\n",
+				row + "\n" + exec + "\n" + path + "\n" + Cmd + "\n" + Extension + "\n" + Pid + "\n" + Mem + "\n" + info + "\n\n",
 			)
 		}
 	}

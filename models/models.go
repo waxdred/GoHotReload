@@ -57,6 +57,7 @@ type Program struct {
 	Files   map[string]time.Time
 	Config  *Config `yaml:"configs"`
 	TTY     string
+	reload  chan bool
 	pid     chan bool
 	check   bool
 	process bool
@@ -83,7 +84,11 @@ func (app *App) Start() *App {
 
 	for i := range app.Program {
 		prog := &app.Program[i]
+		prog.reload = make(chan bool)
 		prog.check = true
+		if err := execCmd(prog); err != nil {
+			return app
+		}
 		wg.Add(1)
 		go func() {
 			pid := make(chan bool, 1)
