@@ -14,7 +14,7 @@ func main() {
 		fmt.Println(app.Errror())
 		os.Exit(-1)
 	}
-	err := app.Listen().Start().Errror()
+	err := app.Start().Errror()
 	if err != nil {
 		fmt.Println(err)
 	}
