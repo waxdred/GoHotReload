@@ -4,27 +4,27 @@ import (
 	"fmt"
 	"os"
 	"sync"
-	"time"
+	// "time"
 
-	"github.com/mitchellh/go-ps"
+	// "github.com/mitchellh/go-ps"
+	"github.com/waxdred/GoHotReload/watcher"
 )
 
 const PROCESSLEN = 16
 
 type ChanProg struct {
-	reload chan bool
-	pid    chan bool
+	kill   chan bool
 	stdout chan string
 	stderr chan string
 }
 
 type ChanApp struct {
-	Call   chan bool
-	Notify chan bool
+	Call       chan bool
+	signalChan chan os.Signal
 }
 
 type App struct {
-	Program      []Program
+	Program      Program
 	Mu           sync.Mutex
 	ConfigSelect string
 	Chan         ChanApp
@@ -50,7 +50,6 @@ type Config struct {
 type Program struct {
 	Pid     int
 	Process *os.Process
-	Files   map[string]time.Time
 	Config  *Config `yaml:"configs"`
 	TTY     string
 	check   bool
@@ -64,6 +63,7 @@ func NewProg(config *Config) *Program {
 	prog := &Program{
 		Config: config,
 	}
+	prog.Chan.kill = make(chan bool, 1)
 	return prog
 }
 
@@ -74,14 +74,12 @@ func (app *App) Listen() *App {
 			select {
 			case <-app.Chan.Call:
 				app.Mu.Lock()
-				if len(app.Program) > 0 {
-					app.printBox(&app.Program[0])
-				}
+				app.printBox(&app.Program)
 				app.Mu.Unlock()
-			case err := <-app.Program[0].Chan.stderr:
+			case err := <-app.Program.Chan.stderr:
 				// TODO storage string in var for use in viewport
 				fmt.Println(err)
-			case out := <-app.Program[0].Chan.stdout:
+			case out := <-app.Program.Chan.stdout:
 				// TODO storage string in var for use in viewport
 				fmt.Println("output:", out)
 			}
@@ -92,76 +90,75 @@ func (app *App) Listen() *App {
 
 func (app *App) Start() *App {
 	err := app.checkPath().error
+	watcher := watcher.NewWatcher().
+		NewPath(app.Program.Config.Path).
+		NewExtension(app.Program.Config.Extension).
+		NewExecutable(app.Program.Config.Executable)
 	if err != nil {
 		return app
 	}
-
+	if err != nil {
+		app.error = err
+		return app
+	}
 	var wg sync.WaitGroup
 	go HandlerSig(app)
-	app.Chan.Call <- true
+	// app.Chan.Call <- true
 
-	for i := range app.Program {
-		prog := &app.Program[i]
-		prog.Chan.reload = make(chan bool)
-		prog.Chan.stderr = make(chan string)
-		prog.Chan.stdout = make(chan string)
-		defer close(prog.Chan.reload)
-		defer close(prog.Chan.stdout)
-		defer close(prog.Chan.stderr)
-		prog.check = true
-		if err := execCmd(prog); err != nil {
-			return app
-		}
-		wg.Add(1)
-		go func() {
-			pid := make(chan bool, 1)
-			defer wg.Done()
-			ticker := time.NewTicker(time.Duration(prog.Config.Interval) * time.Second)
-			routine := false
-			for {
-				prog.info = "Search Programm..."
-				select {
-				case <-pid:
-					if routine {
-						if app.handlerProcess(prog) {
-							app.process(prog)
-						}
-						pid <- false
-						prog.info = ""
-						prog.Pid = 0
-						routine = false
-						prog.check = true
-					}
-				case <-ticker.C:
-					if !routine {
-						processes, err := ps.Processes()
-						if err != nil {
-							fmt.Println("Error:", err)
-							os.Exit(1)
-						}
-						for _, process := range processes {
-							tmp := ""
-							if len(prog.Config.Executable) > PROCESSLEN {
-								tmp = prog.Config.Executable[:PROCESSLEN]
-							} else {
-								tmp = prog.Config.Executable
-							}
-							if process.Executable() == tmp {
-								prog.info = fmt.Sprintf("%s: PID found: %d\n", prog.Config.Executable, process.Pid())
-								prog.Pid = process.Pid()
-								app.Chan.Call <- true
-								app.execPs(prog)
-								routine = true
-								prog.check = false
-								pid <- true
-								break
-							}
-						}
+	app.Program.Chan.stderr = make(chan string)
+	app.Program.Chan.stdout = make(chan string)
+	defer close(app.Program.Chan.stdout)
+	defer close(app.Program.Chan.stderr)
+	app.Program.check = true
+	if err := execCmd(&app.Program); err != nil {
+		return app
+	}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		app.Program.info = "Search Programm..."
+		for {
+			select {
+			case Event := <-watcher.Event:
+				fmt.Print(Event.Name)
+				app.Program.info = "Kill program"
+				app.Program.restart = true
+				app.Program.process = false
+				app.Program.check = false
+				if app.handlerProcess(&app.Program) {
+					killPid(&app.Program)
+				} else {
+					if err := execCmd(&app.Program); err != nil {
+						return
 					}
 				}
+				app.Program.Pid = 0
+				// app.Chan.Call <- true
+			case err := <-watcher.Errors:
+				fmt.Println("Error:", err)
+			case <-app.Program.Chan.kill:
+				app.Program.info = "Restart program"
+				if err := execCmd(&app.Program); err != nil {
+					return
+				}
+				app.Program.restart = false
+				app.Program.process = true
+				app.Program.check = false
+				// app.Chan.Call <- true
+			case pid := <-watcher.EventPid:
+				if app.Program.Pid == 0 {
+					app.Program.info = fmt.Sprintf("%s: PID found: %d\n", app.Program.Config.Executable, pid.Pid)
+					app.Program.Pid = pid.Pid
+					app.Program.process = true
+					app.Program.restart = false
+					app.Program.check = false
+					// app.Chan.Call <- true
+				}
+			default:
+				break
 			}
-		}()
-	}
+		}
+	}()
 	wg.Wait()
 	return app
 }

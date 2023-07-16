@@ -4,13 +4,21 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 )
 
 func clearScreen() {
-	cmd := exec.Command("clear") // Use "cls" instead of "clear" on Windows
+	osName := runtime.GOOS
+	var arg string
+	if osName == "windows" {
+		arg = "cls"
+	} else {
+		arg = "clear"
+	}
+	cmd := exec.Command(arg)
 	cmd.Stdout = os.Stdout
 	cmd.Run()
 }
@@ -18,7 +26,7 @@ func clearScreen() {
 func (app *App) printBox(prog *Program) {
 	clearScreen()
 	doc := strings.Builder{}
-	handler := fmt.Sprintf("handler: %d", len(app.Program))
+	handler := fmt.Sprintf("handler: %s", app.Program.Config.Name)
 	row := lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		activeTab.Render("GoHotReaload"),
