@@ -8,6 +8,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.7.1
 	github.com/mitchellh/go-ps v1.0.0
 	golang.org/x/crypto v0.11.0
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
@@ -26,5 +27,4 @@ require (
 	golang.org/x/sys v0.10.0 // indirect
 	golang.org/x/term v0.10.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
