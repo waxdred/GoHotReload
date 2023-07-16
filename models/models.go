@@ -11,35 +11,31 @@ import (
 
 const PROCESSLEN = 16
 
+type ChanProg struct {
+	reload chan bool
+	pid    chan bool
+	stdout chan string
+	stderr chan string
+}
+
+type ChanApp struct {
+	Call   chan bool
+	Notify chan bool
+}
+
 type App struct {
 	Program      []Program
 	Mu           sync.Mutex
 	ConfigSelect string
+	Chan         ChanApp
 	config       int
 	Config       []Config `yaml:"configs"`
-	Call         chan bool
-	Notify       chan bool
 	model        *model
 	error        error
 }
 
 type Configs struct {
 	Configs []Config `yaml:"configs"`
-}
-
-func (app *App) Listen() *App {
-	// ticker := time.NewTicker(2 * time.Second)
-	go func() {
-		for {
-			select {
-			case <-app.Call:
-				app.Mu.Lock()
-				app.printBox()
-				app.Mu.Unlock()
-			}
-		}
-	}()
-	return app
 }
 
 type Config struct {
@@ -57,12 +53,11 @@ type Program struct {
 	Files   map[string]time.Time
 	Config  *Config `yaml:"configs"`
 	TTY     string
-	reload  chan bool
-	pid     chan bool
 	check   bool
 	process bool
 	restart bool
 	info    string
+	Chan    ChanProg
 }
 
 func NewProg(config *Config) *Program {
@@ -70,6 +65,29 @@ func NewProg(config *Config) *Program {
 		Config: config,
 	}
 	return prog
+}
+
+func (app *App) Listen() *App {
+	// ticker := time.NewTicker(2 * time.Second)
+	go func() {
+		for {
+			select {
+			case <-app.Chan.Call:
+				app.Mu.Lock()
+				if len(app.Program) > 0 {
+					app.printBox(&app.Program[0])
+				}
+				app.Mu.Unlock()
+			case err := <-app.Program[0].Chan.stderr:
+				// TODO storage string in var for use in viewport
+				fmt.Println(err)
+			case out := <-app.Program[0].Chan.stdout:
+				// TODO storage string in var for use in viewport
+				fmt.Println("output:", out)
+			}
+		}
+	}()
+	return app
 }
 
 func (app *App) Start() *App {
@@ -80,11 +98,16 @@ func (app *App) Start() *App {
 
 	var wg sync.WaitGroup
 	go HandlerSig(app)
-	app.Call <- true
+	app.Chan.Call <- true
 
 	for i := range app.Program {
 		prog := &app.Program[i]
-		prog.reload = make(chan bool)
+		prog.Chan.reload = make(chan bool)
+		prog.Chan.stderr = make(chan string)
+		prog.Chan.stdout = make(chan string)
+		defer close(prog.Chan.reload)
+		defer close(prog.Chan.stdout)
+		defer close(prog.Chan.stderr)
 		prog.check = true
 		if err := execCmd(prog); err != nil {
 			return app
@@ -126,7 +149,7 @@ func (app *App) Start() *App {
 							if process.Executable() == tmp {
 								prog.info = fmt.Sprintf("%s: PID found: %d\n", prog.Config.Executable, process.Pid())
 								prog.Pid = process.Pid()
-								app.Call <- true
+								app.Chan.Call <- true
 								app.execPs(prog)
 								routine = true
 								prog.check = false

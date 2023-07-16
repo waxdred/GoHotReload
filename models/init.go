@@ -15,7 +15,7 @@ func New() *App {
 	app := &App{}
 	app.Mu.Lock()
 	defer app.Mu.Unlock()
-	app.Call = make(chan bool)
+	app.Chan.Call = make(chan bool)
 	clearScreen()
 	executablePath, err := os.Executable()
 	if err != nil {

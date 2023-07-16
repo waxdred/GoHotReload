@@ -77,9 +77,6 @@ func execCmd(prog *Program) error {
 		cmd := exec.Command(parse[0], args...)
 		cmd.Dir = prog.Config.Path
 
-		stdoutChan := make(chan string)
-		stderrChan := make(chan string)
-
 		stdout, err := cmd.StdoutPipe()
 		if err != nil {
 			prog.info = fmt.Sprint("failed to get stdout pipe:", err)
@@ -100,33 +97,14 @@ func execCmd(prog *Program) error {
 		go func() {
 			scanner := bufio.NewScanner(stdout)
 			for scanner.Scan() {
-				stdoutChan <- scanner.Text()
+				prog.Chan.stdout <- scanner.Text()
 			}
-			close(stdoutChan)
 		}()
 
 		go func() {
 			scanner := bufio.NewScanner(stderr)
 			for scanner.Scan() {
-				stderrChan <- scanner.Text()
-			}
-			close(stderrChan)
-		}()
-
-		// TODO need get un string var
-		go func() {
-			defer close(stdoutChan)
-			defer close(stderrChan)
-			for {
-				select {
-				case out := <-stdoutChan:
-					fmt.Println("Standard output:", out)
-				case err := <-stderrChan:
-					fmt.Println("Standard error:", err)
-				case <-prog.reload:
-					fmt.Println("Close")
-					break
-				}
+				prog.Chan.stderr <- scanner.Text()
 			}
 		}()
 
@@ -141,13 +119,14 @@ func execCmd(prog *Program) error {
 }
 
 func killPid(prog *Program) error {
-	prog.info = fmt.Sprintf("Kill pid %d", prog.pid)
-	err := prog.Process.Signal(syscall.SIGHUP)
-	if err != nil {
-		prog.info = fmt.Sprintf("Kill process error: %v", err)
-		return err
+	prog.info = fmt.Sprintf("Kill pid %d", prog.Chan.pid)
+	if prog.Process != nil {
+		err := prog.Process.Signal(syscall.SIGHUP)
+		if err != nil {
+			prog.info = fmt.Sprintf("Kill process error: %v", err)
+			return err
+		}
 	}
-	prog.reload <- true
 	return nil
 }
 
@@ -157,24 +136,24 @@ func (app *App) notify(prog *Program) {
 func (app *App) process(prog *Program) {
 	prog.process = true
 	prog.info = "Programm Running"
-	app.Call <- true
+	app.Chan.Call <- true
 	for {
 		update := app.Handler(prog)
 		if !app.handlerProcess(prog) {
 			prog.info = "Pid stop by user"
 			prog.check = true
 			prog.process = false
-			app.Call <- true
+			app.Chan.Call <- true
 			return
 		}
 
 		if update {
 			prog.process = false
 			killPid(prog)
-			app.Call <- true
+			app.Chan.Call <- true
 			prog.restart = true
 			prog.info = "Restart program"
-			app.Call <- true
+			app.Chan.Call <- true
 			if err := execCmd(prog); err != nil {
 				prog.info = fmt.Sprint(err)
 			}

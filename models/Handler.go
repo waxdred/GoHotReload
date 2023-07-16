@@ -14,12 +14,10 @@ func HandlerSig(app *App) {
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
 	<-sig
 	fmt.Println("\nClose Program...")
-	app.Mu.Lock()
 	for _, prog := range app.Program {
 		killPid(&prog)
 	}
 	fmt.Println("Thank see you next time...")
-	app.Mu.Unlock()
 	os.Exit(1)
 }
 
