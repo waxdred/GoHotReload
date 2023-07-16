@@ -68,7 +68,7 @@ func (app *App) execPs(prog *Program) error {
 
 func execCmd(prog *Program) error {
 	go func() {
-		parse := strings.Fields(prog.Config.Cmd)
+		parse := strings.Fields(prog.Config.Cmd[0])
 		if len(parse) == 0 {
 			prog.info = "empty command string"
 			return

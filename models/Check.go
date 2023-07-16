@@ -25,7 +25,7 @@ func (app *App) checkPath() *App {
 func (app *App) CheckingParse() *App {
 	for i := range app.Program {
 		prog := &app.Program[i]
-		if prog.Config.Cmd == "" {
+		if prog.Config.Cmd[0] == "" {
 			app.error = errors.New("Please add command")
 			break
 		} else if prog.Config.Interval == 0 {

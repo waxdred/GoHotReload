@@ -56,7 +56,7 @@ func (app *App) printBox(prog *Program) {
 		row = lipgloss.JoinHorizontal(lipgloss.Bottom, row, gap)
 		exec := Style.Render("Executable:", Style.Foreground(lipgloss.Color(orange)).Render(prog.Config.Executable))
 		path := Style.Render("Path      :", Style.Foreground(lipgloss.Color(orange)).Render(prog.Config.Path))
-		Cmd := Style.Render("Cmd       :", Style.Foreground(lipgloss.Color(orange)).Render(prog.Config.Cmd))
+		Cmd := Style.Render("Cmd       :", Style.Foreground(lipgloss.Color(orange)).Render(prog.Config.Cmd[0]))
 		Extension := Style.Render("Extension :", Style.Foreground(lipgloss.Color(orange)).Render(prog.Config.Extension))
 		Pid := Style.Render("Pid       :", Style.Foreground(lipgloss.Color(orange)).Render(fmt.Sprint(prog.Pid)))
 		Mem := Style.Render(

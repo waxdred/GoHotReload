@@ -39,12 +39,12 @@ type Configs struct {
 }
 
 type Config struct {
-	Name       string `yaml:"name"`
-	Cmd        string `yaml:"cmd"`
-	Executable string `yaml:"executable"`
-	Extension  string `yaml:"extension"`
-	Interval   int    `yaml:"interval"`
-	Path       string `yaml:"path"`
+	Name       string   `yaml:"name"`
+	Cmd        []string `yaml:"cmd"`
+	Executable string   `yaml:"executable"`
+	Extension  string   `yaml:"extension"`
+	Interval   int      `yaml:"interval"`
+	Path       string   `yaml:"path"`
 }
 
 type Program struct {
