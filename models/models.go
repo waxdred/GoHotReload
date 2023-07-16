@@ -89,6 +89,7 @@ func (app *App) Listen() *App {
 }
 
 func (app *App) Start() *App {
+	app.Listen()
 	err := app.checkPath().error
 	watcher := watcher.NewWatcher().
 		NewPath(app.Program.Config.Path).
@@ -103,7 +104,7 @@ func (app *App) Start() *App {
 	}
 	var wg sync.WaitGroup
 	go HandlerSig(app)
-	// app.Chan.Call <- true
+	app.Chan.Call <- true
 
 	app.Program.Chan.stderr = make(chan string)
 	app.Program.Chan.stdout = make(chan string)
@@ -133,7 +134,7 @@ func (app *App) Start() *App {
 					}
 				}
 				app.Program.Pid = 0
-				// app.Chan.Call <- true
+				app.Chan.Call <- true
 			case err := <-watcher.Errors:
 				fmt.Println("Error:", err)
 			case <-app.Program.Chan.kill:
@@ -144,7 +145,7 @@ func (app *App) Start() *App {
 				app.Program.restart = false
 				app.Program.process = true
 				app.Program.check = false
-				// app.Chan.Call <- true
+				app.Chan.Call <- true
 			case pid := <-watcher.EventPid:
 				if app.Program.Pid == 0 {
 					app.Program.info = fmt.Sprintf("%s: PID found: %d\n", app.Program.Config.Executable, pid.Pid)
@@ -152,7 +153,7 @@ func (app *App) Start() *App {
 					app.Program.process = true
 					app.Program.restart = false
 					app.Program.check = false
-					// app.Chan.Call <- true
+					app.Chan.Call <- true
 				}
 			default:
 				break

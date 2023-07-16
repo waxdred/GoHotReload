@@ -38,19 +38,8 @@ func New() *App {
 	}
 	app.Config = config.Configs
 	if len(app.Config) > 1 {
-		fmt.Println(Style.Foreground(lipgloss.Color(blue)).Margin(1, 1).Render("Select your config"))
+		fmt.Println(Style.Foreground(lipgloss.Color(blue)).Margin(1, 1).Render("Select you config"))
 		app.OptionsView()
-		for i := range app.Config {
-			conf := app.Config[i]
-			if conf.Name == app.ConfigSelect {
-				fmt.Println("ok", i)
-				app.Program = append(app.Program, *NewProg(&conf))
-			}
-		}
-	} else if len(app.Config) != 0 {
-		app.Program = append(app.Program, *NewProg(&app.Config[0]))
-	} else {
-		log.Fatal("Error")
 	}
 	for i := range app.Config {
 		conf := app.Config[i]
