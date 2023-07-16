@@ -53,7 +53,7 @@ configs:
 ```
 
 
-![](https://i.imgur.com/lM1HcCG.png)
+![](https://i.imgur.com/Aln3sqf.png)
 
 In this example, we have two programs to monitor. The first program is located in /path/to/program1 directory, has an executable file named program1, and the command to execute it is go run main.go. The second program is located in /path/to/program2 directory, has an executable file named program2, and the command to execute it is python main.py.
 Make sure to provide the correct paths, executable names, file extensions, and commands for your programs.
