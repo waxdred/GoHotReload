@@ -58,7 +58,7 @@ configs:
 In this example, we have two programs to monitor. The first program is located in /path/to/program1 directory, has an executable file named program1, and the command to execute it is go run main.go. The second program is located in /path/to/program2 directory, has an executable file named program2, and the command to execute it is python main.py.
 Make sure to provide the correct paths, executable names, file extensions, and commands for your programs.
 
-![](https://i.imgur.com/XAz6AJ5.png)
+![](https://i.imgur.com/ey6rgRa.png)
 
 ## Running
 To run the GoHotReload program, execute the main.go file. The program will read the config.json file, parse the configuration, and start monitoring the specified programs. If there are any errors during the parsing or execution, they will be displayed in the console.
@@ -74,7 +74,7 @@ make build
 ```shell
 gohot
 ```
-![](https://i.imgur.com/Cy7hLGC.gif)
+![](https://i.imgur.com/ud6iVqn.mp4)
 
 ## Structure
 The GoHotReload program consists of the following files:
