@@ -74,7 +74,7 @@ make build
 ```shell
 gohot
 ```
-![](https://i.imgur.com/ud6iVqn.mp4)
+![](https://i.imgur.com/9DXpaYr.gif)
 
 ## Structure
 The GoHotReload program consists of the following files:
