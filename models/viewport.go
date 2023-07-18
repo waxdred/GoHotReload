@@ -186,13 +186,13 @@ func (v *viewPort) ViewSdtout(input *Input) string {
 		}
 		border, _, _, _, _ := style.GetBorder()
 		if isFirst && isActive {
-			border.BottomLeft = "│"
+			border.BottomLeft = "╵"
 		} else if isFirst && !isActive {
-			border.BottomLeft = "├"
+			border.BottomLeft = "└"
 		} else if isLast && isActive {
 			border.BottomRight = "│"
 		} else if isLast && !isActive {
-			border.BottomRight = "┤"
+			border.BottomRight = "┘"
 		}
 		style = style.Border(border)
 		renderedTabs = append(renderedTabs, style.Render(t))

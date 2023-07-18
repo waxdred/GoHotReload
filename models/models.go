@@ -80,8 +80,10 @@ func (app *App) Listen() *App {
 }
 
 func (app *App) Start() *App {
+	tmp := fmt.Sprint("General", "Stdout", "Stderr")
+	rep := width - (len(tmp) + 12)
 	w := &viewPort{
-		Tabs:        []string{"General", "Stdout", "Stderr", strings.Repeat(" ", (width))},
+		Tabs:        []string{"General", "Stdout", "Stderr", strings.Repeat(" ", rep)},
 		done:        make(chan bool),
 		viewGeneral: NewView(width, height),
 		viewStdout:  NewView(width, height),
