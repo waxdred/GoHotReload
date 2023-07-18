@@ -1,7 +1,6 @@
 package watcher
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
@@ -116,7 +115,6 @@ func (w *Watcher) handlerChange() {
 					time2, ok2 := w.files[path]
 					w.mu.Unlock()
 					if ok1 && ok2 && !time1.Equal(time2) {
-						fmt.Println("Update:", path)
 						w.Event <- Event{Name: path}
 					}
 				}

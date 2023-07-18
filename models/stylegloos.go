@@ -12,8 +12,6 @@ const (
 	// detected. In the case of this example we're hardcoding the width, and
 	// later using the detected width only to truncate in order to avoid jaggy
 	// wrapping.
-	width = 96
-
 	columnWidth = 30
 )
 
@@ -22,12 +20,22 @@ var (
 	Wwidth, Wheight, _ = terminal.GetSize(fd)
 	WeightSet          = 23
 	WeightChat         = Wwidth - WeightSet - 8
+	width              = Wwidth - 10
+	height             = Wheight / 3
 
 	heightPrompt  = 1
 	heightSetting = 6
 	heightSession = Wheight - heightSetting - 7
 	heightChat    = Wheight - heightPrompt - 7
 )
+
+func tabBorderWithBottom(left, middle, right string) lipgloss.Border {
+	border := lipgloss.RoundedBorder()
+	border.BottomLeft = left
+	border.Bottom = middle
+	border.BottomRight = right
+	return border
+}
 
 var (
 	blue       = "#1F6FEB"
@@ -46,26 +54,27 @@ var (
 	highlight  = lipgloss.AdaptiveColor{Light: "#874BFD", Dark: "#7D56F4"}
 	special    = lipgloss.AdaptiveColor{Light: "#43BF6D", Dark: "#73F59F"}
 
+	inactiveTabBorder = tabBorderWithBottom("┴", "─", "┴")
+	activeTabBorder   = tabBorderWithBottom("┘", " ", "└")
+	underTabBorder    = tabBorderWithBottom("┘", " ", "└")
+	docStyle          = lipgloss.NewStyle()
+	highlightColor    = lipgloss.AdaptiveColor{Light: "#874BFD", Dark: "#7D56F4"}
+	inactiveTabStyle  = lipgloss.NewStyle().Border(inactiveTabBorder, true).BorderForeground(highlightColor)
+	activeTabStyle    = inactiveTabStyle.Copy().Border(activeTabBorder, true)
+	windowStyle       = lipgloss.NewStyle().
+				BorderForeground(highlightColor).
+				Align(lipgloss.Left).
+				Border(lipgloss.NormalBorder()).
+				UnsetBorderTop()
+
 	divider = lipgloss.NewStyle().
 		SetString("•").
-		Padding(0, 1).
 		Foreground(subtle).
 		String()
 
 	url = lipgloss.NewStyle().Foreground(special).Render
 
 	// Tabs.
-
-	activeTabBorder = lipgloss.Border{
-		Top:         "─",
-		Bottom:      " ",
-		Left:        "│",
-		Right:       "│",
-		TopLeft:     "╭",
-		TopRight:    "╮",
-		BottomLeft:  "┘",
-		BottomRight: "└",
-	}
 
 	tabBorder = lipgloss.Border{
 		Top:         "─",
@@ -88,15 +97,19 @@ var (
 		BottomRight: "┘",
 	}
 
+	styleBorder = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			Width(WeightChat).MarginLeft(1).Height(heightChat).
+			BorderForeground(lipgloss.Color(blue)).
+			BorderTop(false)
+
 	tab = lipgloss.NewStyle().
 		Border(tabBorder, true).
-		BorderForeground(highlight).
-		Padding(0, 1)
+		BorderForeground(highlight)
 
 	gap = lipgloss.NewStyle().
 		Border(tabGapB, true).
-		BorderForeground(highlight).
-		Padding(0, 1)
+		BorderForeground(highlight)
 	activeTab = tab.Copy().Border(activeTabBorder, true)
 
 	tabGap = gap.Copy().
@@ -112,7 +125,6 @@ var (
 	titleStyle = lipgloss.NewStyle().
 			MarginLeft(1).
 			MarginRight(5).
-			Padding(0, 1).
 			Italic(true).
 			Foreground(lipgloss.Color("#FFF7DB")).
 			SetString("Lip Gloss")
@@ -130,7 +142,6 @@ var (
 	dialogBoxStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color("#874BFD")).
-			Padding(1, 0).
 			BorderTop(true).
 			BorderLeft(true).
 			BorderRight(true).
@@ -139,7 +150,6 @@ var (
 	buttonStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#FFF7DB")).
 			Background(lipgloss.Color("#888B7E")).
-			Padding(0, 3).
 			MarginTop(1)
 
 	activeButtonStyle = buttonStyle.Copy().
@@ -215,6 +225,4 @@ var (
 	fishCakeStyle = statusNugget.Copy().Background(lipgloss.Color("#6124DF"))
 
 	// Page.
-
-	docStyle = lipgloss.NewStyle().Padding(1, 2, 1, 2)
 )

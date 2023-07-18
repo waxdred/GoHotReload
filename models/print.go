@@ -2,87 +2,24 @@ package models
 
 import (
 	"fmt"
-	"os"
-	"os/exec"
-	"runtime"
-	"strings"
-
-	"github.com/charmbracelet/lipgloss"
+	// "os"
+	// "os/exec"
+	// "runtime"
 )
 
 func clearScreen() {
-	osName := runtime.GOOS
-	var arg string
-	if osName == "windows" {
-		arg = "cls"
-	} else {
-		arg = "clear"
-	}
-	cmd := exec.Command(arg)
-	cmd.Stdout = os.Stdout
-	cmd.Run()
-}
-
-func (app *App) printBox(prog *Program) {
-	clearScreen()
-	doc := strings.Builder{}
-	handler := fmt.Sprintf("handler: %s", app.Program.Config.Name)
-	row := lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		activeTab.Render("GoHotReaload"),
-		tab.Render(handler),
-	)
-	gap := tabGap.Render(strings.Repeat(" ", max(0, width-lipgloss.Width(row)-2)))
-	row = lipgloss.JoinHorizontal(lipgloss.Bottom, row, gap)
-	doc.WriteString(row + "\n")
-	// Title
-	{
-		var title strings.Builder
-		desc := lipgloss.JoinVertical(lipgloss.Left,
-			infoStyle.Render("From waxdred and G33KM44N38"+divider+url("https://github.com/waxdred/GoHotReload")),
-		)
-
-		row := lipgloss.JoinHorizontal(lipgloss.Top, title.String(), desc)
-		doc.WriteString(row + "\n")
-	}
-
-	// Dialog
-	{
-		check := tab.Render("status: ", Style.Foreground(lipgloss.Color(orange)).Render("Checking"))
-		if prog.restart {
-			check = tab.Render("status: ", Style.Foreground(lipgloss.Color(red)).Render("Restart"))
-		} else if prog.process {
-			check = tab.Render("status: ", Style.Foreground(lipgloss.Color(green)).Render("Running"))
-		} else if prog.check {
-			check = tab.Render("status: ", Style.Foreground(lipgloss.Color(orange)).Render("Checking"))
-		}
-		row := lipgloss.JoinHorizontal(
-			lipgloss.Top,
-			check,
-		)
-		gap := tabGap.Render(strings.Repeat(" ", max(0, width-lipgloss.Width(row)-2)))
-		row = lipgloss.JoinHorizontal(lipgloss.Bottom, row, gap)
-		exec := Style.Render("Executable:", Style.Foreground(lipgloss.Color(orange)).Render(prog.Config.Executable))
-		path := Style.Render("Path      :", Style.Foreground(lipgloss.Color(orange)).Render(prog.Config.Path))
-		Cmd := Style.Render("Cmd       :", Style.Foreground(lipgloss.Color(orange)).Render(prog.Config.Cmd[0]))
-		Extension := Style.Render("Extension :", Style.Foreground(lipgloss.Color(orange)).Render(prog.Config.Extension))
-		Pid := Style.Render("Pid       :", Style.Foreground(lipgloss.Color(orange)).Render(fmt.Sprint(prog.Pid)))
-		Mem := Style.Render(
-			"Men       :",
-			Style.Foreground(lipgloss.Color(orange)).Render(fmt.Sprint(ExecPsMem(*prog), "%%")),
-		)
-		info := Style.Render("info      :", Style.Foreground(lipgloss.Color(green)).Render(prog.info))
-		doc.WriteString(
-			row + "\n" + exec + "\n" + path + "\n" + Cmd + "\n" + Extension + "\n" + Pid + "\n" + Mem + "\n" + info + "\n\n",
-		)
-	}
-
-	fmt.Printf(doc.String())
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
+	fmt.Print("\033[1000A")
+	fmt.Print("\033[0J")
+	// osName := runtime.GOOS
+	// var arg string
+	// if osName == "windows" {
+	// 	arg = "cls"
+	// } else {
+	// 	arg = "clear"
+	// }
+	// cmd := exec.Command(arg)
+	// cmd.Stdout = os.Stdout
+	// cmd.Stderr = os.Stderr
+	// cmd.Stdin = os.Stdin
+	// cmd.Run()
 }

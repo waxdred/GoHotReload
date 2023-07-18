@@ -7,11 +7,13 @@ require (
 	github.com/charmbracelet/bubbletea v0.24.2
 	github.com/charmbracelet/lipgloss v0.7.1
 	github.com/mitchellh/go-ps v1.0.0
+	github.com/nsf/termbox-go v1.1.1
 	golang.org/x/crypto v0.11.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
+	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/containerd/console v1.0.4-0.20230313162750-1ae8d489ac81 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect

@@ -126,6 +126,21 @@ func execCmd(prog *Program) error {
 	return nil
 }
 
+func killPidStop(prog *Program) error {
+	prog.info = fmt.Sprintf("Kill pid %d", prog.Pid)
+	if prog.Process != nil {
+		err := prog.Process.Kill()
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+		fmt.Println("Wait kill...")
+		prog.Process.Wait()
+		prog.Pid = 0
+	}
+	return nil
+}
+
 func killPid(prog *Program) error {
 	prog.info = fmt.Sprintf("Kill pid %d", prog.Pid)
 	if prog.Process != nil {

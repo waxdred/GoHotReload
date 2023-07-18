@@ -21,6 +21,9 @@ func (app *App) checkPath() *App {
 }
 
 func (app *App) CheckingParse() *App {
+	if app.Program.Config == nil {
+		os.Exit(0)
+	}
 	if app.Program.Config.Cmd[0] == "" {
 		app.error = errors.New("Please add command")
 		return app

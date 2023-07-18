@@ -3,10 +3,9 @@ package models
 import (
 	"fmt"
 	"os"
+	"strings"
 	"sync"
-	// "time"
 
-	// "github.com/mitchellh/go-ps"
 	"github.com/waxdred/GoHotReload/watcher"
 )
 
@@ -23,6 +22,12 @@ type ChanApp struct {
 	signalChan chan os.Signal
 }
 
+type Input struct {
+	stdout []string
+	stderr []string
+	global []string
+}
+
 type App struct {
 	Program      Program
 	Mu           sync.Mutex
@@ -30,7 +35,9 @@ type App struct {
 	Chan         ChanApp
 	config       int
 	Config       []Config `yaml:"configs"`
+	view         *viewPort
 	model        *model
+	Input        *Input
 	error        error
 }
 
@@ -68,27 +75,19 @@ func NewProg(config *Config) *Program {
 }
 
 func (app *App) Listen() *App {
-	// ticker := time.NewTicker(2 * time.Second)
-	go func() {
-		for {
-			select {
-			case <-app.Chan.Call:
-				app.Mu.Lock()
-				app.printBox(&app.Program)
-				app.Mu.Unlock()
-			case err := <-app.Program.Chan.stderr:
-				// TODO storage string in var for use in viewport
-				fmt.Println(err)
-			case out := <-app.Program.Chan.stdout:
-				// TODO storage string in var for use in viewport
-				fmt.Println("output:", out)
-			}
-		}
-	}()
+	app.RunViewPort()
 	return app
 }
 
 func (app *App) Start() *App {
+	w := &viewPort{
+		Tabs:        []string{"General", "Stdout", "Stderr", strings.Repeat(" ", (width))},
+		done:        make(chan bool),
+		viewGeneral: NewView(width, height),
+		viewStdout:  NewView(width, height),
+		viewSterr:   NewView(width, height),
+	}
+	app.view = w
 	app.Listen()
 	err := app.checkPath().error
 	watcher := watcher.NewWatcher().
@@ -103,7 +102,6 @@ func (app *App) Start() *App {
 		return app
 	}
 	var wg sync.WaitGroup
-	go HandlerSig(app)
 	app.Chan.Call <- true
 
 	app.Program.Chan.stderr = make(chan string)
@@ -120,8 +118,7 @@ func (app *App) Start() *App {
 		app.Program.info = "Search Programm..."
 		for {
 			select {
-			case Event := <-watcher.Event:
-				fmt.Print(Event.Name)
+			case <-watcher.Event:
 				app.Program.info = "Kill program"
 				app.Program.restart = true
 				app.Program.process = false

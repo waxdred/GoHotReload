@@ -14,7 +14,9 @@ import (
 )
 
 func New() *App {
-	app := &App{}
+	app := &App{
+		Input: &Input{},
+	}
 	app.Mu.Lock()
 	app.Chan.signalChan = make(chan os.Signal, 1)
 	signal.Notify(app.Chan.signalChan, syscall.SIGHUP)
